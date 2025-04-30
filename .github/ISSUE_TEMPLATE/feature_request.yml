@@ -1,0 +1,29 @@
+name: 🚀 Feature Request 
+description: Submit a proposal/request for a new Akash MCP Server feature.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for making the Akash MCP Server better! 
+  - type: textarea
+    id: the-feature
+    attributes:
+      label: The Feature
+      description: A clear and concise description of the feature proposal
+      placeholder: Tell us what you want to see in Akash MCP!
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Please outline the motivation for the proposal. Is your feature request related to a specific problem? e.g., "I'm working with Akash deployments and would like to be able to X". If this is related to another GitHub issue, please link here too.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context, code examples, or references to similar features in other projects that might help us understand your request better.
