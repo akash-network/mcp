@@ -50,7 +50,7 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
   },
 };
 
-async function sendManifest(sdl: SDL, lease: CustomLease, certificate: CertificatePem) {
+export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: CertificatePem) {
   if (!lease.id) {
     throw new Error('Lease ID is undefined');
   }

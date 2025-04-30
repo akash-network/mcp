@@ -14,7 +14,7 @@ const parameters = z.object({
 export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
   name: 'create-deployment',
   description:
-    'Create a new deployment on Akash Network using the provided SDL (Service Definition Language) string, deposit amount and currency.' + 
+    'Create a new deployment on Akash Network using the provided SDL (Service Definition Language) string, deposit amount and currency.' +
     'The deposit amount is the amount of tokens to deposit into the deployment.' +
     'Minimum deposit amount is 500000 uakt.',
   parameters,

@@ -1,6 +1,5 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import AkashMCP from './AkashMCP.js';
-import { GetAccountAddrTool } from './tools/get-account-addr.js';
 
 async function main() {
   const server = new AkashMCP();

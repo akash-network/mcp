@@ -6,3 +6,4 @@ export { GetSDLsTool } from './get-sdls.js';
 export { GetBidsTool } from './get-bids.js';
 export { CreateLeaseTool } from './create-lease.js';
 export { GetAccountAddrTool } from './get-account-addr.js';
+export { UpdateDeploymentTool } from './update-deployment.js';

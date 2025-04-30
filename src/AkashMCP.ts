@@ -12,6 +12,7 @@ import {
   CreateLeaseTool,
   GetServicesTool,
   CreateDeploymentTool,
+  UpdateDeploymentTool,
 } from './tools/index.js';
 import type { ToolContext } from './types/index.js';
 import type { CertificatePem } from '@akashnetwork/akashjs/build/certificates/certificate-manager/CertificateManager.js';
@@ -114,8 +115,14 @@ class AkashMCP extends McpServer {
       GetServicesTool.parameters.shape,
       async (args, extra) => GetServicesTool.handler(args, this.getToolContext())
     );
-  }
 
+    this.tool(
+      UpdateDeploymentTool.name,
+      UpdateDeploymentTool.description,
+      UpdateDeploymentTool.parameters.shape,
+      async (args, extra) => UpdateDeploymentTool.handler(args, this.getToolContext())
+    );
+  }
   public isInitialized(): boolean {
     return this.wallet !== null && this.client !== null && this.certificate !== null;
   }

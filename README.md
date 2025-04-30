@@ -1,4 +1,3 @@
-
 <div align="left">
   
   <a href="https://akash.network/" target="_blank">
@@ -10,8 +9,9 @@
   **Akash MCP Server** is a TypeScript implementation of a Model Context Protocol (MCP) server for interacting with the Akash Network.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/akashnet_)](https://x.com/akashnet_ "Follow Akash Network on X")
-[![Discord](https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat)](https://discord.gg/akash "Join Akash Discord")
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/akashnet_)](https://x.com/akashnet_ 'Follow Akash Network on X')
+[![Discord](https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat)](https://discord.gg/akash 'Join Akash Discord')
+
 </div>
 
 ## Note
@@ -109,12 +109,13 @@ The server provides the following tools for AI agents:
 
 - **GetAccountAddrTool**: Retrieve your Akash account address
 - **GetBidsTool**: Get bids for deployments
-- **CreateDeploymentTool**: Create a new deployment on the Akash Network
+- **CreateDeploymentTool**: Create a new deployment on Akash Network
 - **GetSDLsTool**: Get a list of available SDLs (from awesome-akash repository)
 - **GetSDLTool**: Get a specific SDL by name
 - **SendManifestTool**: Send a manifest to a provider
 - **CreateLeaseTool**: Create a lease with a provider
 - **GetServicesTool**: Get information about active services
+- **UpdateDeploymentTool**: Update a deployment on Akash Network
 
 ## Development
 
