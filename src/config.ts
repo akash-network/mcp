@@ -4,7 +4,7 @@ export const SERVER_CONFIG = {
   port: process.env.PORT || 3000,
   environment: process.env.NODE_ENV || 'development',
   rpcEndpoint: process.env.RPC_ENDPOINT || 'https://rpc.akashnet.net:443',
-  mnemonic: process.env.MNEMONIC || '',
+  mnemonic: process.env.AKASH_MNEMONIC || '',
 } as const;
 
 export type ServerConfig = typeof SERVER_CONFIG;
