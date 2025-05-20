@@ -108,6 +108,7 @@ The server exposes a standard MCP interface that can be used by AI models to int
 The server provides the following tools for AI agents:
 
 - **GetAccountAddrTool**: Retrieve your Akash account address
+- **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
 - **GetBidsTool**: Get bids for deployments
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
 - **GetSDLsTool**: Get a list of available SDLs (from awesome-akash repository)
@@ -116,6 +117,42 @@ The server provides the following tools for AI agents:
 - **CreateLeaseTool**: Create a lease with a provider
 - **GetServicesTool**: Get information about active services
 - **UpdateDeploymentTool**: Update a deployment on Akash Network
+
+### GetBalancesTool
+
+**Description:**
+
+Get the AKT (uakt) and other balances for a given Akash account address.
+
+**Input Schema:**
+
+```json
+{
+  "address": "akash1..." // Akash account address (string, required)
+}
+```
+
+**Example Usage:**
+
+Request:
+
+```json
+{
+  "address": "akash1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Response:
+
+```json
+[
+  {
+    "denom": "uakt",
+    "amount": "123456789"
+  }
+  // ...other tokens if present
+]
+```
 
 ## Development
 
