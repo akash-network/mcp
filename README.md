@@ -108,14 +108,86 @@ The server exposes a standard MCP interface that can be used by AI models to int
 The server provides the following tools for AI agents:
 
 - **GetAccountAddrTool**: Retrieve your Akash account address
+- **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
 - **GetBidsTool**: Get bids for deployments
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
+- **AddFundsTool**: Deposit additional AKT (uakt) into a deployment escrow account
 - **GetSDLsTool**: Get a list of available SDLs (from awesome-akash repository)
 - **GetSDLTool**: Get a specific SDL by name
 - **SendManifestTool**: Send a manifest to a provider
 - **CreateLeaseTool**: Create a lease with a provider
 - **GetServicesTool**: Get information about active services
 - **UpdateDeploymentTool**: Update a deployment on Akash Network
+
+### GetBalancesTool
+
+**Description:**
+
+Get the AKT (uakt) and other balances for a given Akash account address.
+
+**Input Schema:**
+
+```json
+{
+  "address": "akash1..." // Akash account address (string, required)
+}
+```
+
+**Example Usage:**
+
+Request:
+
+```json
+{
+  "address": "akash1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Response:
+
+```json
+[
+  {
+    "denom": "uakt",
+    "amount": "123456789"
+  }
+  // ...other tokens if present
+]
+```
+
+### AddFundsTool
+
+**Description:**
+
+Deposit additional AKT (uakt) into a deployment escrow account.
+
+**Input Schema:**
+
+```json
+{
+  "address": "akash1...", // Akash account address (string, required)
+  "dseq": 123456,          // Deployment sequence number (integer, required)
+  "amount": "1000000"     // Amount to add in uakt (string, required)
+}
+```
+
+**Example Usage:**
+
+Request:
+
+```json
+{
+  "address": "akash1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "dseq": 123456,
+  "amount": "1000000"
+}
+```
+
+Response:
+
+```json
+"...transaction raw log or error message..."
+```
 
 ## Development
 
