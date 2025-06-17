@@ -8,3 +8,4 @@ export { CreateLeaseTool } from './create-lease.js';
 export { GetAccountAddrTool } from './get-account-addr.js';
 export { UpdateDeploymentTool } from './update-deployment.js';
 export { AddFundsTool } from './add-funds.js';
+export { GetBalancesTool } from './get-balances.js';
