@@ -29,7 +29,7 @@ This server provides a bridge between AI agents and the Akash Network, allowing 
 - **Certificate Management**: Manages Akash certificates
 - **Tools for Akash Interaction**:
   - Account address retrieval
-  - Deployment creation and management
+  - Deployment creation, querying, updating, and termination
   - SDL (Stack Definition Language) operations
   - Bid management
   - Lease creation
@@ -111,6 +111,8 @@ The server provides the following tools for AI agents:
 - **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
 - **GetBidsTool**: Get bids for deployments
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
+- **GetDeploymentTool**: Get deployment details including status, groups, and escrow account
+- **CloseDeploymentTool**: Close/terminate a deployment on Akash Network
 - **AddFundsTool**: Deposit additional AKT (uakt) into a deployment escrow account
 - **GetSDLsTool**: Get a list of available SDLs (from awesome-akash repository)
 - **GetSDLTool**: Get a specific SDL by name
@@ -187,6 +189,79 @@ Response:
 
 ```json
 "...transaction raw log or error message..."
+```
+
+### GetDeploymentTool
+
+**Description:**
+
+Get deployment details from Akash Network including status, groups, and escrow account.
+
+**Input Schema:**
+
+```json
+{
+  "dseq": 123456  // Deployment sequence number (integer, required)
+}
+```
+
+**Example Usage:**
+
+Request:
+
+```json
+{
+  "dseq": 123456
+}
+```
+
+Response:
+
+```json
+{
+  "deployment": {
+    "deploymentId": { "owner": "akash1...", "dseq": "123456" },
+    "state": "active",
+    "version": "...",
+    "createdAt": "..."
+  },
+  "groups": [...],
+  "escrowAccount": {
+    "balance": { "denom": "uakt", "amount": "..." },
+    "state": "open",
+    // ...other escrow details
+  }
+}
+```
+
+### CloseDeploymentTool
+
+**Description:**
+
+Close a deployment on Akash Network. This terminates the deployment, closes associated leases, and refunds remaining escrow funds.
+
+**Input Schema:**
+
+```json
+{
+  "dseq": 123456  // Deployment sequence number (integer, required)
+}
+```
+
+**Example Usage:**
+
+Request:
+
+```json
+{
+  "dseq": 123456
+}
+```
+
+Response:
+
+```json
+"...transaction raw log confirming deployment closure..."
 ```
 
 ## Development
