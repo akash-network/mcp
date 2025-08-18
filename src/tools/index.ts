@@ -10,3 +10,4 @@ export { UpdateDeploymentTool } from './update-deployment.js';
 export { AddFundsTool } from './add-funds.js';
 export { GetBalancesTool } from './get-balances.js';
 export { CloseDeploymentTool } from './close-deployment.js';
+export { GetDeploymentTool } from './get-deployment.js';
