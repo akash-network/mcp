@@ -12,8 +12,11 @@ export const GetBalancesTool: ToolDefinition<typeof parameters> = {
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     try {
-      const balances = await context.client.getAllBalances(params.address);
-      return createOutput(balances);
+      // Query balances using chain SDK
+      const balances = await context.chainSDK.cosmos.bank.v1beta1.getAllBalances({
+        address: params.address,
+      });
+      return createOutput(balances.balances);
     } catch (error: any) {
       return createOutput({ error: error.message || 'Failed to fetch balances' });
     }

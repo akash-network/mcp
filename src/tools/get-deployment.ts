@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import { createOutput } from '../utils/create-output.js';
-import { getRpc } from '@akashnetwork/akashjs/build/rpc/index.js';
-import { SERVER_CONFIG } from '../config.js';
-import { QueryClientImpl, QueryDeploymentRequest } from '@akashnetwork/akash-api/akash/deployment/v1beta3';
 
 const parameters = z.object({
   dseq: z.number().min(1),
@@ -17,7 +14,7 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { dseq } = params;
-    const { wallet } = context;
+    const { wallet, chainSDK } = context;
 
     try {
       const accounts = await wallet.getAccounts();
@@ -25,13 +22,14 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
         return createOutput({ error: 'No accounts found in wallet' });
       }
 
-      const rpc = await getRpc(SERVER_CONFIG.rpcEndpoint);
-      const deploymentClient = new QueryClientImpl(rpc);
-      const queryReq = QueryDeploymentRequest.fromPartial({
-        id: { owner: accounts[0].address, dseq },
+      // Query deployment using chain SDK (v1beta4 API)
+      const deploymentRes = await chainSDK.akash.deployment.v1beta4.getDeployment({
+        id: {
+          owner: accounts[0].address,
+          dseq: BigInt(dseq),
+        },
       });
-      const deploymentRes = await deploymentClient.Deployment(queryReq);
-      
+
       if (!deploymentRes.deployment) {
         return createOutput({ error: `Deployment ${dseq} not found for owner ${accounts[0].address}` });
       }

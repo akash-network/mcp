@@ -1,5 +1,5 @@
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import type { SigningStargateClient } from '@cosmjs/stargate';
+import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import { loadWalletAndClient, loadCertificate } from './utils/index.js';
 import { SERVER_CONFIG } from './config.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -18,13 +18,13 @@ import {
   CloseDeploymentTool,
   GetDeploymentTool,
 } from './tools/index.js';
-import type { ToolContext } from './types/index.js';
-import type { CertificatePem } from '@akashnetwork/akashjs/build/certificates/certificate-manager/CertificateManager.js';
+import type { ToolContext, ChainNodeSDK, StargateTxClient } from './types/index.js';
 
 class AkashMCP extends McpServer {
   private wallet: DirectSecp256k1HdWallet | null = null;
-  private client: SigningStargateClient | null = null;
+  private client: StargateTxClient | null = null;
   private certificate: CertificatePem | null = null;
+  private chainSDK: ChainNodeSDK | null = null;
 
   constructor() {
     super({
@@ -41,10 +41,11 @@ class AkashMCP extends McpServer {
       client: this.client!,
       wallet: this.wallet!,
       certificate: this.certificate!,
+      chainSDK: this.chainSDK!,
     };
   }
 
-  public getClient(): SigningStargateClient {
+  public getClient(): StargateTxClient {
     if (!this.client) {
       throw new Error('Client not initialized');
     }
@@ -53,10 +54,11 @@ class AkashMCP extends McpServer {
 
   public async initialize() {
     try {
-      const { wallet, client } = await loadWalletAndClient();
+      const { wallet, client, chainSDK } = await loadWalletAndClient();
       this.wallet = wallet;
       this.client = client;
-      this.certificate = await loadCertificate(wallet, client);
+      this.chainSDK = chainSDK;
+      this.certificate = await loadCertificate(wallet, client, chainSDK);
     } catch (error) {
       console.error('Failed to initialize MCP server:', error);
       throw error;
@@ -156,7 +158,7 @@ class AkashMCP extends McpServer {
     );
   }
   public isInitialized(): boolean {
-    return this.wallet !== null && this.client !== null && this.certificate !== null;
+    return this.wallet !== null && this.client !== null && this.certificate !== null && this.chainSDK !== null;
   }
 }
 

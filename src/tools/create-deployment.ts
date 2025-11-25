@@ -1,9 +1,7 @@
 import { z } from 'zod';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import { MsgCreateDeployment } from '@akashnetwork/akash-api/akash/deployment/v1beta3';
-import { SDL } from '@akashnetwork/akashjs/build/sdl/SDL/SDL.js';
+import { SDL } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
-import { getTypeUrl } from '@akashnetwork/akashjs/build/stargate/index.js';
 
 const parameters = z.object({
   rawSDL: z.string().min(1),
@@ -20,42 +18,50 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { rawSDL } = params;
-    const { wallet, client } = context;
+    const { wallet, chainSDK } = context;
 
     try {
-      // Parse SDL directly from the string
+      // Parse SDL directly from the string using chain-sdk
       const sdl = SDL.fromString(rawSDL, 'beta3');
 
-      const blockheight = await client.getHeight();
-      const groups = sdl.groups();
       const accounts = await wallet.getAccounts();
-
       if (!accounts || accounts.length === 0) {
         return createOutput({ error: 'No accounts found in wallet' });
       }
 
-      const deployment = {
+      // Get block height for deployment sequence number
+      const statusResponse = await chainSDK.cosmos.base.tendermint.v1beta1.getLatestBlock({});
+      const blockHeight = Number(statusResponse.block?.header?.height || 0);
+
+      // Get groups from SDL
+      const groups = sdl.groups();
+
+      // Get manifest hash
+      const hash = await sdl.manifestVersion();
+
+      // Create deployment using chain SDK (v1beta4 API)
+      const result = await chainSDK.akash.deployment.v1beta4.createDeployment({
         id: {
           owner: accounts[0].address,
-          dseq: blockheight,
+          dseq: BigInt(blockHeight),
         },
         groups: groups,
+        hash: hash,
         deposit: {
-          denom: params.currency,
-          amount: params.deposit.toString(),
+          amount: {
+            denom: params.currency,
+            amount: params.deposit.toString(),
+          },
+          sources: [1], // Source.balance = 1
         },
-        version: await sdl.manifestVersion(),
-        depositor: accounts[0].address,
-      };
+      });
 
-      const msg = {
-        typeUrl: getTypeUrl(MsgCreateDeployment),
-        value: MsgCreateDeployment.fromPartial(deployment),
-      };
-
-      const tx = await client.signAndBroadcast(accounts[0].address, [msg], 'auto');
-
-      return createOutput(tx.rawLog);
+      return createOutput({
+        success: true,
+        dseq: blockHeight,
+        owner: accounts[0].address,
+        result: result,
+      });
     } catch (error: any) {
       console.error('Error creating deployment:', error);
       return createOutput({
