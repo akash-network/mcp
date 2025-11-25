@@ -1,15 +1,9 @@
 import { z } from 'zod';
 import type { ToolDefinition, ToolContext, CustomLease, CustomLeaseID } from '../types/index.js';
-import { SDL } from '@akashnetwork/akashjs/build/sdl/SDL/SDL.js';
-import { getRpc } from '@akashnetwork/akashjs/build/rpc/index.js';
+import { SDL, type CertificatePem } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
 import https from 'https';
-import { SERVER_CONFIG } from '../config.js';
-import {
-  QueryClientImpl as QueryProviderClient,
-  QueryProviderRequest,
-} from '@akashnetwork/akash-api/akash/provider/v1beta3';
-import type { CertificatePem } from '@akashnetwork/akashjs/build/certificates/certificate-manager/CertificateManager.js';
+import type { ChainNodeSDK } from '../types/index.js';
 
 const parameters = z.object({
   sdl: z.string().min(1),
@@ -26,9 +20,9 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
     'Send a manifest to a provider using the provided SDL, owner, dseq, gseq, oseq and provider.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { wallet, certificate } = context;
+    const { certificate, chainSDK } = context;
 
-    // Parse SDL
+    // Parse SDL using chain-sdk
     const sdl = SDL.fromString(params.sdl, 'beta3');
 
     // Create lease object with our custom type
@@ -41,7 +35,7 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
     };
 
     try {
-      await sendManifest(sdl, { id: lease }, certificate);
+      await sendManifest(sdl, { id: lease }, certificate, chainSDK);
       return createOutput('Manifest sent successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -50,26 +44,27 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
   },
 };
 
-export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: CertificatePem) {
+export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: CertificatePem, chainSDK?: ChainNodeSDK) {
   if (!lease.id) {
     throw new Error('Lease ID is undefined');
   }
 
   const { dseq, provider } = lease.id;
-  const rpc = await getRpc(SERVER_CONFIG.rpcEndpoint);
 
-  const client = new QueryProviderClient(rpc);
-  const request = QueryProviderRequest.fromPartial({
+  if (!chainSDK) {
+    throw new Error('ChainSDK is required to send manifest');
+  }
+
+  // Query provider using chain SDK (v1beta4 API)
+  const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
     owner: provider,
   });
 
-  const tx = await client.Provider(request);
-
-  if (tx.provider === undefined) {
+  if (providerRes.provider === undefined) {
     throw new Error(`Could not find provider ${provider}`);
   }
 
-  const providerInfo = tx.provider;
+  const providerInfo = providerRes.provider;
   const manifest = sdl.manifestSortedJSON();
   const path = `/deployment/${dseq}/manifest`;
 
