@@ -22,11 +22,10 @@ export async function loadWalletAndClient(): Promise<WalletAndClient> {
   });
 
   // Create the chain SDK for queries and transactions
-  // Note: gRPC endpoint is typically on port 9090 for Cosmos chains
-  const grpcEndpoint = SERVER_CONFIG.rpcEndpoint.replace(':443', ':9090').replace('https://', 'http://');
+  // Use configured gRPC endpoint (public Akash gRPC endpoints use TLS on port 443)
   const chainSDK = createChainNodeSDK({
     query: {
-      baseUrl: grpcEndpoint,
+      baseUrl: SERVER_CONFIG.grpcEndpoint,
     },
     tx: {
       signer: stargateClient,

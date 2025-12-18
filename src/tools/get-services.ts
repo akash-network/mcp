@@ -79,6 +79,8 @@ async function queryLeaseStatus(lease: CustomLease, providerUri: string, certifi
     cert: certificate.cert,
     key: certificate.privateKey,
     rejectUnauthorized: false,
+    // Use 'localhost' as SNI to trigger mTLS mode on the provider
+    servername: 'localhost',
   });
 
   const uri = new URL(providerUri);
