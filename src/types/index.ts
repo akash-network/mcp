@@ -13,6 +13,7 @@ export interface ToolContext {
   wallet: DirectSecp256k1HdWallet;
   certificate: CertificatePem;
   chainSDK: ChainNodeSDK;
+  reloadCertificate?: () => Promise<CertificatePem>;
 }
 
 export interface ToolDefinition<P extends z.ZodType> {

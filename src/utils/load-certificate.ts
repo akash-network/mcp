@@ -13,13 +13,43 @@ function pemToUint8Array(pem: string): Uint8Array {
   return new TextEncoder().encode(pem);
 }
 
+// Get the certificates directory path
+export function getCertificatesDir(): string {
+  return path.resolve(__dirname, './certificates');
+}
+
+// Get the certificate path for a specific address
+export function getCertificatePath(address: string): string {
+  return path.resolve(getCertificatesDir(), `${address}.json`);
+}
+
+// Normalize PEM line endings to Unix-style (\n)
+function normalizePem(pem: string): string {
+  return pem.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
+// Load certificate directly from disk (no caching)
+export function loadCertificateFromDisk(address: string): CertificatePem | null {
+  const certificatePath = getCertificatePath(address);
+  if (fs.existsSync(certificatePath)) {
+    const cert = JSON.parse(fs.readFileSync(certificatePath, 'utf8')) as CertificatePem;
+    // Normalize line endings for all PEM fields
+    return {
+      cert: normalizePem(cert.cert),
+      publicKey: normalizePem(cert.publicKey),
+      privateKey: normalizePem(cert.privateKey),
+    };
+  }
+  return null;
+}
+
 export async function loadCertificate(
   wallet: DirectSecp256k1HdWallet,
   client: StargateTxClient,
   chainSDK?: ChainNodeSDK
 ): Promise<CertificatePem> {
   const accounts = await wallet.getAccounts();
-  const certificatesDir = path.resolve(__dirname, './certificates');
+  const certificatesDir = getCertificatesDir();
 
   // Ensure certificates directory exists
   if (!fs.existsSync(certificatesDir)) {
@@ -30,7 +60,13 @@ export async function loadCertificate(
 
   // check to see if we can load the certificate
   if (fs.existsSync(certificatePath)) {
-    return JSON.parse(fs.readFileSync(certificatePath, 'utf8'));
+    // Normalize line endings for mTLS compatibility
+    const cert = JSON.parse(fs.readFileSync(certificatePath, 'utf8')) as CertificatePem;
+    return {
+      cert: normalizePem(cert.cert),
+      publicKey: normalizePem(cert.publicKey),
+      privateKey: normalizePem(cert.privateKey),
+    };
   }
 
   // if not, create a new one

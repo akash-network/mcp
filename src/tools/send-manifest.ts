@@ -2,8 +2,8 @@ import { z } from 'zod';
 import type { ToolDefinition, ToolContext, CustomLease, CustomLeaseID } from '../types/index.js';
 import { SDL, type CertificatePem } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
-import https from 'https';
 import type { ChainNodeSDK } from '../types/index.js';
+import https from 'https';
 
 const parameters = z.object({
   sdl: z.string().min(1),
@@ -49,7 +49,7 @@ export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: Ce
     throw new Error('Lease ID is undefined');
   }
 
-  const { dseq, provider } = lease.id;
+  const { dseq, gseq, oseq, provider, owner } = lease.id;
 
   if (!chainSDK) {
     throw new Error('ChainSDK is required to send manifest');
@@ -69,10 +69,16 @@ export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: Ce
   const path = `/deployment/${dseq}/manifest`;
 
   const uri = new URL(providerInfo.hostUri);
+
+  // Create HTTPS agent with mTLS credentials
+  // IMPORTANT: Use a custom servername that doesn't match the provider's hostname
+  // This triggers mTLS mode on the provider (vs Let's Encrypt mode when SNI matches)
   const agent = new https.Agent({
     cert: certificate.cert,
     key: certificate.privateKey,
     rejectUnauthorized: false,
+    // Use 'localhost' as SNI to trigger mTLS mode on the provider
+    servername: 'localhost',
   });
 
   return await new Promise<void>((resolve, reject) => {
@@ -85,23 +91,24 @@ export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: Ce
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          'Content-Length': manifest.length,
+          'Content-Length': Buffer.byteLength(manifest),
         },
         agent: agent,
       },
       (res) => {
         res.on('error', reject);
 
+        let responseBody = '';
         res.on('data', (chunk) => {
-          // Helpful for debugging
-          //console.warn("Response:", chunk.toString());
+          responseBody += chunk.toString();
         });
 
-        if (res.statusCode !== 200) {
-          return reject(`Could not send manifest: ${res.statusCode}`);
-        }
-
-        resolve();
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            return reject(new Error(`Could not send manifest: ${res.statusCode} - ${responseBody}`));
+          }
+          resolve();
+        });
       }
     );
 
