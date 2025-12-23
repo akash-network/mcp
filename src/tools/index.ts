@@ -16,3 +16,4 @@ export { RevokeAllCertificatesTool } from './revoke-all-certificates.js';
 export { RegenerateCertificateTool } from './regenerate-certificate.js';
 export { GetLogsTool } from './get-logs.js';
 export { ExecCommandTool } from './exec-command.js';
+export { CheckProviderSafetyTool } from './check-provider-safety.js';

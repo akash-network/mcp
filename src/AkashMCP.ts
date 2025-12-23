@@ -22,6 +22,7 @@ import {
   RegenerateCertificateTool,
   GetLogsTool,
   ExecCommandTool,
+  CheckProviderSafetyTool,
 } from './tools/index.js';
 import type { ToolContext, ChainNodeSDK, StargateTxClient } from './types/index.js';
 
@@ -212,6 +213,13 @@ class AkashMCP extends McpServer {
       ExecCommandTool.description,
       ExecCommandTool.parameters.shape,
       async (args, extra) => ExecCommandTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      CheckProviderSafetyTool.name,
+      CheckProviderSafetyTool.description,
+      CheckProviderSafetyTool.parameters.shape,
+      async (args, extra) => CheckProviderSafetyTool.handler(args, await this.getToolContext())
     );
   }
   public isInitialized(): boolean {
