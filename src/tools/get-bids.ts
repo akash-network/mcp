@@ -25,17 +25,41 @@ export const GetBidsTool: ToolDefinition<typeof parameters> = {
         },
       });
 
-      const bids = bidsResponse.bids.map((bidResponse) => {
-        return {
-          bidId: bidResponse.bid?.id,
-          state: bidResponse.bid?.state,
-          price: bidResponse.bid?.price,
-          createdAt: bidResponse.bid?.createdAt,
-        };
-      });
+      // Enrich bids with provider information
+      const bidsWithProviderInfo = await Promise.all(
+        bidsResponse.bids.map(async (bidResponse) => {
+          const providerId = bidResponse.bid?.id?.provider;
+          let providerInfo = null;
 
-      if (bids.length > 0) {
-        return createOutput(bids);
+          if (providerId) {
+            try {
+              const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
+                owner: providerId,
+              });
+
+              providerInfo = {
+                hostUri: providerRes.provider?.hostUri,
+                attributes: providerRes.provider?.attributes,
+                info: providerRes.provider?.info,
+              };
+            } catch (error) {
+              console.error(`Error fetching provider ${providerId}:`, error);
+              providerInfo = { error: 'Could not fetch provider details' };
+            }
+          }
+
+          return {
+            bidId: bidResponse.bid?.id,
+            state: bidResponse.bid?.state,
+            price: bidResponse.bid?.price,
+            createdAt: bidResponse.bid?.createdAt,
+            provider: providerInfo,
+          };
+        })
+      );
+
+      if (bidsWithProviderInfo.length > 0) {
+        return createOutput(bidsWithProviderInfo);
       } else {
         return createOutput('No bids found for deployment ' + dseq + '.');
       }
