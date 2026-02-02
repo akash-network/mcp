@@ -19,6 +19,7 @@ export async function loadWalletAndClient(): Promise<WalletAndClient> {
     baseUrl: SERVER_CONFIG.rpcEndpoint,
     signer: wallet,
     defaultGasPrice: '0.025uakt',
+    gasMultiplier: 2.0, // Increased from default 1.3 to handle deployment updates
   });
 
   // Create the chain SDK for queries and transactions
