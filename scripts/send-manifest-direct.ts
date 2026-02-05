@@ -11,6 +11,15 @@ import { SDL } from '@akashnetwork/chain-sdk';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const mongoPassword = process.env.MONGO_INITDB_ROOT_PASSWORD;
+const infisicalEncryptionKey = process.env.INFISICAL_ENCRYPTION_KEY;
+const infisicalJwtSecret = process.env.INFISICAL_JWT_SECRET;
+
+if (!mongoPassword || !infisicalEncryptionKey || !infisicalJwtSecret) {
+  console.error('Missing required env vars: MONGO_INITDB_ROOT_PASSWORD, INFISICAL_ENCRYPTION_KEY, INFISICAL_JWT_SECRET');
+  process.exit(1);
+}
+
 const SDL_CONTENT = `---
 version: "2.0"
 
@@ -19,7 +28,7 @@ services:
     image: mongo:7
     env:
       - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=fd88a9fe393bdddeed336a7f35289796
+      - MONGO_INITDB_ROOT_PASSWORD=${mongoPassword}
     expose:
       - port: 27017
         as: 27017
@@ -34,12 +43,12 @@ services:
   infisical:
     image: infisical/infisical:latest
     env:
-      - ENCRYPTION_KEY=2931120f0296358e9aaf6fe4929f5ad8
-      - JWT_SIGNUP_SECRET=36bbae0d102b24a76a93f3e90feaa2b1c38ba4eb7d8c2a95966904b6c4722ffe
-      - JWT_REFRESH_SECRET=36bbae0d102b24a76a93f3e90feaa2b1c38ba4eb7d8c2a95966904b6c4722ffe
-      - JWT_AUTH_SECRET=36bbae0d102b24a76a93f3e90feaa2b1c38ba4eb7d8c2a95966904b6c4722ffe
-      - JWT_SERVICE_SECRET=36bbae0d102b24a76a93f3e90feaa2b1c38ba4eb7d8c2a95966904b6c4722ffe
-      - MONGO_URL=mongodb://admin:fd88a9fe393bdddeed336a7f35289796@mongo:27017/infisical?authSource=admin
+      - ENCRYPTION_KEY=${infisicalEncryptionKey}
+      - JWT_SIGNUP_SECRET=${infisicalJwtSecret}
+      - JWT_REFRESH_SECRET=${infisicalJwtSecret}
+      - JWT_AUTH_SECRET=${infisicalJwtSecret}
+      - JWT_SERVICE_SECRET=${infisicalJwtSecret}
+      - MONGO_URL=mongodb://admin:${mongoPassword}@mongo:27017/infisical?authSource=admin
       - SITE_URL=https://secrets.alternatefutures.ai
       - HTTPS_ENABLED=false
       - TELEMETRY_ENABLED=false
