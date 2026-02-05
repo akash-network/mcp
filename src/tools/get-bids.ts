@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import { QueryClientImpl as QueryMarketClient } from '@akashnetwork/akash-api/akash/market/v1beta4';
-import { QueryBidsRequest } from '@akashnetwork/akash-api/akash/market/v1beta4';
 import { createOutput } from '../utils/index.js';
-import { getRpc } from '@akashnetwork/akashjs/build/rpc/index.js';
-import { SERVER_CONFIG } from '../config.js';
 
 const parameters = z.object({
   dseq: z.number().int().positive(),
@@ -18,37 +14,60 @@ export const GetBidsTool: ToolDefinition<typeof parameters> = {
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { dseq, owner } = params;
-    const rpc = await getRpc(SERVER_CONFIG.rpcEndpoint);
-    const marketClient = new QueryMarketClient(rpc);
+    const { chainSDK } = context;
 
-    const request = QueryBidsRequest.fromPartial({
-      filters: {
-        owner: owner,
-        dseq: dseq,
-      },
-    });
+    try {
+      // Query bids using chain SDK (v1beta5 API)
+      const bidsResponse = await chainSDK.akash.market.v1beta5.getBids({
+        filters: {
+          owner: owner,
+          dseq: BigInt(dseq),
+        },
+      });
 
-    let bids: {
-      bidId: string;
-      state: string;
-      price: string;
-      createdAt: string;
-    }[] = [];
+      // Enrich bids with provider information
+      const bidsWithProviderInfo = await Promise.all(
+        bidsResponse.bids.map(async (bidResponse) => {
+          const providerId = bidResponse.bid?.id?.provider;
+          let providerInfo = null;
 
-    const bidsResponse = await marketClient.Bids(request);
-    bids = bidsResponse.bids.map((bid) => {
-      return {
-        bidId: JSON.stringify(bid.bid?.bidId),
-        state: JSON.stringify(bid.bid?.state),
-        price: JSON.stringify(bid.bid?.price),
-        createdAt: JSON.stringify(bid.bid?.createdAt),
-      };
-    });
+          if (providerId) {
+            try {
+              const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
+                owner: providerId,
+              });
 
-    if (bids.length > 0) {
-      return createOutput(bids);
-    } else {
-      return createOutput('No bids found for deployment ' + dseq + '.');
+              providerInfo = {
+                hostUri: providerRes.provider?.hostUri,
+                attributes: providerRes.provider?.attributes,
+                info: providerRes.provider?.info,
+              };
+            } catch (error) {
+              console.error(`Error fetching provider ${providerId}:`, error);
+              providerInfo = { error: 'Could not fetch provider details' };
+            }
+          }
+
+          return {
+            bidId: bidResponse.bid?.id,
+            state: bidResponse.bid?.state,
+            price: bidResponse.bid?.price,
+            createdAt: bidResponse.bid?.createdAt,
+            provider: providerInfo,
+          };
+        })
+      );
+
+      if (bidsWithProviderInfo.length > 0) {
+        return createOutput(bidsWithProviderInfo);
+      } else {
+        return createOutput('No bids found for deployment ' + dseq + '.');
+      }
+    } catch (error: any) {
+      console.error('Error getting bids:', error);
+      return createOutput({
+        error: error.message || 'Unknown error getting bids',
+      });
     }
   },
 };

@@ -3,17 +3,17 @@ import type { ToolDefinition, ToolContext } from '../types/index.js';
 import { createOutput } from '../utils/create-output.js';
 
 const parameters = z.object({
-  dseq: z.number().min(1),
+  serial: z.string().min(1).describe('The certificate serial number to revoke'),
 });
 
-export const CloseDeploymentTool: ToolDefinition<typeof parameters> = {
-  name: 'close-deployment',
+export const RevokeCertificateTool: ToolDefinition<typeof parameters> = {
+  name: 'revoke-certificate',
   description:
-    'Close a deployment on Akash Network. ' +
-    'The dseq is the deployment sequence number.',
+    'Revoke a certificate on Akash Network. ' +
+    'The serial is the certificate serial number to revoke.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { dseq } = params;
+    const { serial } = params;
     const { wallet, chainSDK } = context;
 
     try {
@@ -23,22 +23,23 @@ export const CloseDeploymentTool: ToolDefinition<typeof parameters> = {
         return createOutput({ error: 'No accounts found in wallet' });
       }
 
-      // Close deployment using chain SDK (v1beta4 API)
-      const result = await chainSDK.akash.deployment.v1beta4.closeDeployment({
+      // Revoke certificate using chain SDK
+      const result = await chainSDK.akash.cert.v1.revokeCertificate({
         id: {
           owner: accounts[0].address,
-          dseq: BigInt(dseq),
+          serial: serial,
         },
       });
 
       return createOutput({
         success: true,
+        serial: serial,
         result: result,
       });
     } catch (error: any) {
-      console.error('Error closing deployment:', error);
+      console.error('Error revoking certificate:', error);
       return createOutput({
-        error: error.message || 'Unknown error closing deployment',
+        error: error.message || 'Unknown error revoking certificate',
       });
     }
   },
