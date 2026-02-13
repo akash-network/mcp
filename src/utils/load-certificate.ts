@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import * as cert from '@akashnetwork/akashjs/build/certificates/index.js';
 import { certificateManager } from '@akashnetwork/akashjs/build/certificates/certificate-manager/index.js';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import type { DirectSecp256k1HdWallet, DirectSecp256k1Wallet } from '@cosmjs/proto-signing';
 import type { SigningStargateClient } from '@cosmjs/stargate';
 import type { CertificatePem } from '@akashnetwork/akashjs/build/certificates/certificate-manager/CertificateManager.js';
 
@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function loadCertificate(
-  wallet: DirectSecp256k1HdWallet,
+  wallet: DirectSecp256k1HdWallet | DirectSecp256k1Wallet,
   client: SigningStargateClient
 ): Promise<CertificatePem> {
   const accounts = await wallet.getAccounts();
