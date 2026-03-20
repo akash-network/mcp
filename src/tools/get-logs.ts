@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import https from 'https';
 import WebSocket from 'ws';
@@ -74,7 +75,7 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
 async function queryLeaseLogs(
   leaseId: LeaseID,
   providerUri: string,
-  certificate: any,
+  certificate: CertificatePem,
   service: string | undefined,
   tail: number
 ): Promise<string> {
@@ -141,7 +142,7 @@ async function queryLeaseLogs(
       }
     });
 
-    ws.on('close', (code, reason) => {
+    ws.on('close', (code: number, reason: Buffer) => {
       clearTimeout(timeout);
       if (!resolved) {
         resolved = true;
@@ -157,7 +158,7 @@ async function queryLeaseLogs(
       }
     });
 
-    ws.on('error', (error) => {
+    ws.on('error', (error: Error) => {
       clearTimeout(timeout);
       if (!resolved) {
         resolved = true;

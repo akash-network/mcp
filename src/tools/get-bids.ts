@@ -63,10 +63,11 @@ export const GetBidsTool: ToolDefinition<typeof parameters> = {
       } else {
         return createOutput('No bids found for deployment ' + dseq + '.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error getting bids:', error);
       return createOutput({
-        error: error.message || 'Unknown error getting bids',
+        error: errorMessage || 'Unknown error getting bids',
       });
     }
   },

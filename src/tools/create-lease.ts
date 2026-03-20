@@ -35,10 +35,10 @@ export const CreateLeaseTool: ToolDefinition<typeof parameters> = {
         success: true,
         result: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating lease:', error);
       return createOutput({
-        error: error.message || 'Unknown error creating lease',
+        error: error instanceof Error ? error.message : String(error) || 'Unknown error creating lease',
       });
     }
   },

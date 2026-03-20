@@ -48,8 +48,8 @@ export const AddFundsTool: ToolDefinition<typeof parameters> = {
         success: true,
         result: result,
       });
-    } catch (error: any) {
-      return createOutput({ error: error.message || 'Failed to add funds to deployment.' });
+    } catch (error: unknown) {
+      return createOutput({ error: error instanceof Error ? error.message : String(error) || 'Failed to add funds to deployment.' });
     }
   },
 };

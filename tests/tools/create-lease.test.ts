@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CreateLeaseTool } from './create-lease.js';
-import type { ToolContext } from '../types/index.js';
+import { CreateLeaseTool } from '../../src/tools/create-lease.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('CreateLeaseTool', () => {
   describe('metadata', () => {

@@ -36,10 +36,10 @@ export const RevokeCertificateTool: ToolDefinition<typeof parameters> = {
         serial: serial,
         result: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error revoking certificate:', error);
       return createOutput({
-        error: error.message || 'Unknown error revoking certificate',
+        error: error instanceof Error ? error.message : String(error) || 'Unknown error revoking certificate',
       });
     }
   },

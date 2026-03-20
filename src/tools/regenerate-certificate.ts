@@ -4,15 +4,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { CertificateManager } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import { createOutput } from '../utils/create-output.js';
+import { createOutput, pemToUint8Array } from '../utils/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Helper to convert PEM string to Uint8Array
-function pemToUint8Array(pem: string): Uint8Array {
-  return new TextEncoder().encode(pem);
-}
 
 const parameters = z.object({});
 
@@ -63,13 +58,15 @@ export const RegenerateCertificateTool: ToolDefinition<typeof parameters> = {
               },
             });
             revokedCount++;
-          } catch (revokeError: any) {
+          } catch (revokeError: unknown) {
             // Continue even if revoke fails for one cert
-            console.warn(`Failed to revoke cert ${serial}: ${revokeError.message}`);
+            const msg = revokeError instanceof Error ? revokeError.message : String(revokeError);
+            console.warn(`Failed to revoke cert ${serial}: ${msg}`);
           }
         }
-      } catch (queryError: any) {
-        console.warn(`Failed to query existing certs: ${queryError.message}`);
+      } catch (queryError: unknown) {
+        const msg = queryError instanceof Error ? queryError.message : String(queryError);
+        console.warn(`Failed to query existing certs: ${msg}`);
         // Continue anyway - we'll try to create a new cert
       }
 
@@ -90,10 +87,11 @@ export const RegenerateCertificateTool: ToolDefinition<typeof parameters> = {
           cert: pemToUint8Array(newCertificate.cert),
           pubkey: pemToUint8Array(newCertificate.publicKey),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Don't silently ignore "already exists" - this means our cert wasn't created!
+        const errorMessage = error instanceof Error ? error.message : String(error);
         return createOutput({
-          error: `Failed to broadcast certificate: ${error.message}. ` +
+          error: `Failed to broadcast certificate: ${errorMessage}. ` +
             `Try running revoke-all-certificates first, then regenerate again.`,
         });
       }
@@ -117,10 +115,11 @@ export const RegenerateCertificateTool: ToolDefinition<typeof parameters> = {
         certPath: certificatePath,
         revokedCount: revokedCount,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error regenerating certificate:', error);
       return createOutput({
-        error: error.message || 'Unknown error regenerating certificate',
+        error: errorMessage || 'Unknown error regenerating certificate',
       });
     }
   },

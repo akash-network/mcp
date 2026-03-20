@@ -3,13 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { CertificateManager, type CertificatePem } from '@akashnetwork/chain-sdk';
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import type { ChainNodeSDK, StargateTxClient } from '../types/index.js';
+import type { ChainNodeSDK } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Helper to convert PEM string to Uint8Array
-function pemToUint8Array(pem: string): Uint8Array {
+/** Convert PEM string to Uint8Array for chain SDK certificate operations. */
+export function pemToUint8Array(pem: string): Uint8Array {
   return new TextEncoder().encode(pem);
 }
 
@@ -45,7 +45,6 @@ export function loadCertificateFromDisk(address: string): CertificatePem | null 
 
 export async function loadCertificate(
   wallet: DirectSecp256k1HdWallet,
-  client: StargateTxClient,
   chainSDK?: ChainNodeSDK
 ): Promise<CertificatePem> {
   const accounts = await wallet.getAccounts();
@@ -84,17 +83,21 @@ export async function loadCertificate(
       // save the certificate
       fs.writeFileSync(certificatePath, JSON.stringify(certificate));
       return certificate;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if certificate already exists on chain
-      if (error.message?.includes('certificate already exists')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('certificate already exists')) {
         fs.writeFileSync(certificatePath, JSON.stringify(certificate));
         return certificate;
       }
-      throw new Error(`Could not create certificate: ${error.message}`);
+      throw new Error(`Could not create certificate: ${errorMessage}`);
     }
   }
 
-  // Fallback: Just save locally without broadcasting (for when chainSDK is not ready)
-  fs.writeFileSync(certificatePath, JSON.stringify(certificate));
-  return certificate;
+  // chainSDK is required to broadcast the certificate to the chain.
+  // Without it, providers won't recognize the certificate.
+  throw new Error(
+    'Cannot create certificate: chainSDK is required to broadcast the certificate on-chain. ' +
+    'Providers will reject certificates that are only saved locally.'
+  );
 }

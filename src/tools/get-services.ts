@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import https from 'https';
 import { createOutput } from '../utils/create-output.js';
@@ -66,7 +67,7 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
   },
 };
 
-async function queryLeaseStatus(lease: CustomLease, providerUri: string, certificate: any) {
+async function queryLeaseStatus(lease: CustomLease, providerUri: string, certificate: CertificatePem) {
   const id = lease.id;
 
   if (id === undefined) {

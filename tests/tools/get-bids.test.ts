@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { GetBidsTool } from './get-bids.js';
-import type { ToolContext } from '../types/index.js';
+import { GetBidsTool } from '../../src/tools/get-bids.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('GetBidsTool', () => {
   describe('metadata', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createOutput } from './create-output.js';
+import { createOutput } from '../../src/utils/create-output.js';
 
 describe('createOutput', () => {
   it('should return a valid MCP tool response with string content', () => {

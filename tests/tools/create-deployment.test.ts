@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CreateDeploymentTool } from './create-deployment.js';
-import type { ToolContext } from '../types/index.js';
+import { CreateDeploymentTool } from '../../src/tools/create-deployment.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('CreateDeploymentTool', () => {
   describe('metadata', () => {

@@ -6,6 +6,30 @@ const parameters = z.object({
   dseq: z.number().min(1),
 });
 
+/** Minimal shape of a lease response from the chain SDK. */
+interface LeaseResponse {
+  lease?: {
+    id?: { provider?: string };
+    price?: unknown;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+/** Minimal shape of a deployment group from the chain SDK. */
+interface DeploymentGroup {
+  state?: { count?: number | string };
+  spec?: {
+    resources?: {
+      cpu?: { units?: { val?: number | string } };
+      memory?: { quantity?: { val?: number | string } };
+      gpu?: { units?: { val?: number | string } };
+      storage?: Array<{ quantity?: { val?: number | string } }>;
+    };
+  };
+  [key: string]: unknown;
+}
+
 export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
   name: 'get-deployment',
   description:
@@ -37,11 +61,12 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
       }
 
       // Calculate resource totals from groups
-      const resources = calculateResourceTotals(deploymentRes.groups || []);
+      const groups = (deploymentRes.groups || []) as unknown as DeploymentGroup[];
+      const resources = calculateResourceTotals(groups);
 
       // Query leases for this deployment
-      let leases: any[] = [];
-      let providers: any[] = [];
+      let leases: LeaseResponse[] = [];
+      let providers: Array<Record<string, unknown>> = [];
 
       try {
         const leasesRes = await chainSDK.akash.market.v1beta5.getLeases({
@@ -51,10 +76,10 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
           },
         });
 
-        leases = leasesRes.leases || [];
+        leases = (leasesRes.leases || []) as unknown as LeaseResponse[];
 
         // Get provider details for each lease
-        const providerPromises = leases.map(async (lease: any) => {
+        const providerPromises = leases.map(async (lease) => {
           try {
             const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
               owner: lease.lease?.id?.provider,
@@ -88,23 +113,24 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
         groups: deploymentRes.groups,
         escrowAccount: deploymentRes.escrowAccount,
         resources,
-        leases: leases.map((lease: any, index: number) => ({
+        leases: leases.map((lease, index: number) => ({
           ...lease.lease,
           price: lease.lease?.price,
           provider: providers[index],
         })),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error getting deployment:', error);
       return createOutput({
-        error: error.message || 'Unknown error getting deployment',
+        error: errorMessage || 'Unknown error getting deployment',
       });
     }
   },
 };
 
 // Helper function to calculate resource totals across all groups
-function calculateResourceTotals(groups: any[]): {
+function calculateResourceTotals(groups: DeploymentGroup[]): {
   cpu: { units: string; total: number };
   memory: { units: string; total: number };
   storage: { units: string; total: number };

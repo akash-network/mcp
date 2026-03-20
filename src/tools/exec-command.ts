@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import https from 'https';
 import WebSocket from 'ws';
@@ -79,7 +80,7 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
 async function executeCommand(
   leaseId: LeaseID,
   providerUri: string,
-  certificate: any,
+  certificate: CertificatePem,
   command: string,
   service: string | undefined,
   stdin: boolean,
@@ -186,7 +187,7 @@ async function executeCommand(
       }
     });
 
-    ws.on('close', (code, reason) => {
+    ws.on('close', (code: number, reason: Buffer) => {
       clearTimeout(timeout);
       if (!resolved) {
         resolved = true;
@@ -211,7 +212,7 @@ async function executeCommand(
       }
     });
 
-    ws.on('error', (error) => {
+    ws.on('error', (error: Error) => {
       clearTimeout(timeout);
       if (!resolved) {
         resolved = true;

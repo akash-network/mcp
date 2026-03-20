@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CloseDeploymentTool } from './close-deployment.js';
-import type { ToolContext } from '../types/index.js';
+import { CloseDeploymentTool } from '../../src/tools/close-deployment.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('CloseDeploymentTool', () => {
   describe('metadata', () => {

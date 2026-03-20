@@ -35,10 +35,10 @@ export const CloseDeploymentTool: ToolDefinition<typeof parameters> = {
         success: true,
         result: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error closing deployment:', error);
       return createOutput({
-        error: error.message || 'Unknown error closing deployment',
+        error: error instanceof Error ? error.message : String(error) || 'Unknown error closing deployment',
       });
     }
   },

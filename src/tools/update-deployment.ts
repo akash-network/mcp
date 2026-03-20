@@ -65,10 +65,10 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
         success: true,
         result: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating deployment:', error);
       return createOutput({
-        error: error.message || 'Unknown error updating deployment',
+        error: error instanceof Error ? error.message : String(error) || 'Unknown error updating deployment',
       });
     }
   },

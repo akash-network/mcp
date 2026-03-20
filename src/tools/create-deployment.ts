@@ -62,10 +62,10 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
         owner: accounts[0].address,
         result: result,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating deployment:', error);
       return createOutput({
-        error: error.message || 'Unknown error creating deployment',
+        error: error instanceof Error ? error.message : String(error) || 'Unknown error creating deployment',
       });
     }
   },

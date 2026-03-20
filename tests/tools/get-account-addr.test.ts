@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { GetAccountAddrTool } from './get-account-addr.js';
-import type { ToolContext } from '../types/index.js';
+import { GetAccountAddrTool } from '../../src/tools/get-account-addr.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('GetAccountAddrTool', () => {
   describe('metadata', () => {

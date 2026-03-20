@@ -17,8 +17,8 @@ export const GetBalancesTool: ToolDefinition<typeof parameters> = {
         address: params.address,
       });
       return createOutput(balances.balances);
-    } catch (error: any) {
-      return createOutput({ error: error.message || 'Failed to fetch balances' });
+    } catch (error: unknown) {
+      return createOutput({ error: error instanceof Error ? error.message : String(error) || 'Failed to fetch balances' });
     }
   },
 };

@@ -58,8 +58,8 @@ export const RevokeAllCertificatesTool: ToolDefinition<typeof parameters> = {
             },
           });
           revokedSerials.push(serial);
-        } catch (error: any) {
-          errors.push(`Serial ${serial}: ${error.message}`);
+        } catch (error: unknown) {
+          errors.push(`Serial ${serial}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
 
@@ -71,10 +71,10 @@ export const RevokeAllCertificatesTool: ToolDefinition<typeof parameters> = {
         revokedSerials: revokedSerials,
         errors: errors.length > 0 ? errors : undefined,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error revoking certificates:', error);
       return createOutput({
-        error: error.message || 'Unknown error revoking certificates',
+        error: (error instanceof Error ? error.message : String(error)) || 'Unknown error revoking certificates',
       });
     }
   },

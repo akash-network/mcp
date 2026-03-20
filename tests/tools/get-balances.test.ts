@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { GetBalancesTool } from './get-balances.js';
-import type { ToolContext } from '../types/index.js';
+import { GetBalancesTool } from '../../src/tools/get-balances.js';
+import type { ToolContext } from '../../src/types/index.js';
 
 describe('GetBalancesTool', () => {
   describe('metadata', () => {

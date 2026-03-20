@@ -22,7 +22,6 @@ import {
   RegenerateCertificateTool,
   GetLogsTool,
   ExecCommandTool,
-  CheckProviderSafetyTool,
 } from './tools/index.js';
 import type { ToolContext, ChainNodeSDK, StargateTxClient } from './types/index.js';
 
@@ -64,7 +63,7 @@ class AkashMCP extends McpServer {
     if (!this.wallet || !this.client || !this.chainSDK) {
       throw new Error('Cannot reload certificate: server not initialized');
     }
-    this.certificate = await loadCertificate(this.wallet, this.client, this.chainSDK);
+    this.certificate = await loadCertificate(this.wallet, this.chainSDK);
     return this.certificate;
   }
 
@@ -81,7 +80,7 @@ class AkashMCP extends McpServer {
       this.wallet = wallet;
       this.client = client;
       this.chainSDK = chainSDK;
-      this.certificate = await loadCertificate(wallet, client, chainSDK);
+      this.certificate = await loadCertificate(wallet, chainSDK);
     } catch (error) {
       console.error('Failed to initialize MCP server:', error);
       throw error;
@@ -93,134 +92,128 @@ class AkashMCP extends McpServer {
       GetAccountAddrTool.name,
       GetAccountAddrTool.description,
       GetAccountAddrTool.parameters.shape,
-      async (args, extra) => GetAccountAddrTool.handler(args, await this.getToolContext())
+      async (args) => GetAccountAddrTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetBidsTool.name,
       GetBidsTool.description,
       GetBidsTool.parameters.shape,
-      async (args, extra) => GetBidsTool.handler(args, await this.getToolContext())
+      async (args) => GetBidsTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       CreateDeploymentTool.name,
       CreateDeploymentTool.description,
       CreateDeploymentTool.parameters.shape,
-      async (args, extra) => CreateDeploymentTool.handler(args, await this.getToolContext())
+      async (args) => CreateDeploymentTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetSDLsTool.name,
       GetSDLsTool.description,
       GetSDLsTool.parameters.shape,
-      async (args, extra) => GetSDLsTool.handler(args, await this.getToolContext())
+      async (args) => GetSDLsTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetSDLTool.name,
       GetSDLTool.description,
       GetSDLTool.parameters.shape,
-      async (args, extra) => GetSDLTool.handler(args, await this.getToolContext())
+      async (args) => GetSDLTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       SendManifestTool.name,
       SendManifestTool.description,
       SendManifestTool.parameters.shape,
-      async (args, extra) => SendManifestTool.handler(args, await this.getToolContext())
+      async (args) => SendManifestTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       CreateLeaseTool.name,
       CreateLeaseTool.description,
       CreateLeaseTool.parameters.shape,
-      async (args, extra) => CreateLeaseTool.handler(args, await this.getToolContext())
+      async (args) => CreateLeaseTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetServicesTool.name,
       GetServicesTool.description,
       GetServicesTool.parameters.shape,
-      async (args, extra) => GetServicesTool.handler(args, await this.getToolContext())
+      async (args) => GetServicesTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       UpdateDeploymentTool.name,
       UpdateDeploymentTool.description,
       UpdateDeploymentTool.parameters.shape,
-      async (args, extra) => UpdateDeploymentTool.handler(args, await this.getToolContext())
+      async (args) => UpdateDeploymentTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       AddFundsTool.name,
       AddFundsTool.description,
       AddFundsTool.parameters.shape,
-      async (args, extra) => AddFundsTool.handler(args, await this.getToolContext())
+      async (args) => AddFundsTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetBalancesTool.name,
       GetBalancesTool.description,
       GetBalancesTool.parameters.shape,
-      async (args, extra) => GetBalancesTool.handler(args, await this.getToolContext())
+      async (args) => GetBalancesTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       CloseDeploymentTool.name,
       CloseDeploymentTool.description,
       CloseDeploymentTool.parameters.shape,
-      async (args, extra) => CloseDeploymentTool.handler(args, await this.getToolContext())
+      async (args) => CloseDeploymentTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetDeploymentTool.name,
       GetDeploymentTool.description,
       GetDeploymentTool.parameters.shape,
-      async (args, extra) => GetDeploymentTool.handler(args, await this.getToolContext())
+      async (args) => GetDeploymentTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       RevokeCertificateTool.name,
       RevokeCertificateTool.description,
       RevokeCertificateTool.parameters.shape,
-      async (args, extra) => RevokeCertificateTool.handler(args, await this.getToolContext())
+      async (args) => RevokeCertificateTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       RevokeAllCertificatesTool.name,
       RevokeAllCertificatesTool.description,
       RevokeAllCertificatesTool.parameters.shape,
-      async (args, extra) => RevokeAllCertificatesTool.handler(args, await this.getToolContext())
+      async (args) => RevokeAllCertificatesTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       RegenerateCertificateTool.name,
       RegenerateCertificateTool.description,
       RegenerateCertificateTool.parameters.shape,
-      async (args, extra) => RegenerateCertificateTool.handler(args, await this.getToolContext())
+      async (args) => RegenerateCertificateTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       GetLogsTool.name,
       GetLogsTool.description,
       GetLogsTool.parameters.shape,
-      async (args, extra) => GetLogsTool.handler(args, await this.getToolContext())
+      async (args) => GetLogsTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
       ExecCommandTool.name,
       ExecCommandTool.description,
       ExecCommandTool.parameters.shape,
-      async (args, extra) => ExecCommandTool.handler(args, await this.getToolContext())
+      async (args) => ExecCommandTool.handler(args, await this.getToolContext())
     );
 
-    this.tool(
-      CheckProviderSafetyTool.name,
-      CheckProviderSafetyTool.description,
-      CheckProviderSafetyTool.parameters.shape,
-      async (args, extra) => CheckProviderSafetyTool.handler(args, await this.getToolContext())
-    );
   }
   public isInitialized(): boolean {
     return this.wallet !== null && this.client !== null && this.certificate !== null && this.chainSDK !== null;
