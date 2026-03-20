@@ -1,6 +1,6 @@
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { createStargateClient, createChainNodeSDK } from '@akashnetwork/chain-sdk';
-import { SERVER_CONFIG } from '../config.js';
+import { SERVER_CONFIG, validateMnemonic } from '../config.js';
 import type { ChainNodeSDK, StargateTxClient } from '../types/index.js';
 
 interface WalletAndClient {
@@ -10,7 +10,8 @@ interface WalletAndClient {
 }
 
 export async function loadWalletAndClient(): Promise<WalletAndClient> {
-  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(SERVER_CONFIG.mnemonic, {
+  const mnemonic = validateMnemonic(SERVER_CONFIG.mnemonic);
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: 'akash',
   });
 

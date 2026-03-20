@@ -48,6 +48,11 @@ class AkashMCP extends McpServer {
     const freshCert = loadCertificateFromDisk(accounts[0].address);
     if (freshCert) {
       this.certificate = freshCert;
+    } else if (!this.certificate) {
+      throw new Error(
+        'No certificate available. The on-disk certificate is missing and no in-memory ' +
+        'certificate exists. Run regenerate-certificate to create a new one.'
+      );
     }
 
     return {
