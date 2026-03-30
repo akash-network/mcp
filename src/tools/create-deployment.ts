@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import { SDL } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';

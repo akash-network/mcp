@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { ToolDefinition, ToolContext, CustomLease, CustomLeaseID } from '../types/index.js';
 import { SDL, type CertificatePem } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
