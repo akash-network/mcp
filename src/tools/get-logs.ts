@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import https from 'https';

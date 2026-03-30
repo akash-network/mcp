@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import type { z } from 'zod/v3';
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import type { ReadResourceCallback } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CertificatePem } from '@akashnetwork/chain-sdk';
