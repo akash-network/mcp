@@ -1,23 +1,44 @@
 import { z } from 'zod';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import { createOutput } from '../utils/create-output.js';
-import { getRpc } from '@akashnetwork/akashjs/build/rpc/index.js';
-import { SERVER_CONFIG } from '../config.js';
-import { QueryClientImpl, QueryDeploymentRequest } from '@akashnetwork/akash-api/akash/deployment/v1beta3';
 
 const parameters = z.object({
   dseq: z.number().min(1),
 });
 
+/** Minimal shape of a lease response from the chain SDK. */
+interface LeaseResponse {
+  lease?: {
+    id?: { provider?: string };
+    price?: unknown;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+/** Minimal shape of a deployment group from the chain SDK. */
+interface DeploymentGroup {
+  state?: { count?: number | string };
+  spec?: {
+    resources?: {
+      cpu?: { units?: { val?: number | string } };
+      memory?: { quantity?: { val?: number | string } };
+      gpu?: { units?: { val?: number | string } };
+      storage?: Array<{ quantity?: { val?: number | string } }>;
+    };
+  };
+  [key: string]: unknown;
+}
+
 export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
   name: 'get-deployment',
   description:
-    'Get deployment details from Akash Network including status, groups, and escrow account. ' +
+    'Get deployment details from Akash Network including status, groups, escrow account, leases, and provider info. ' +
     'The dseq is the deployment sequence number.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { dseq } = params;
-    const { wallet } = context;
+    const { wallet, chainSDK } = context;
 
     try {
       const accounts = await wallet.getAccounts();
@@ -25,27 +46,139 @@ export const GetDeploymentTool: ToolDefinition<typeof parameters> = {
         return createOutput({ error: 'No accounts found in wallet' });
       }
 
-      const rpc = await getRpc(SERVER_CONFIG.rpcEndpoint);
-      const deploymentClient = new QueryClientImpl(rpc);
-      const queryReq = QueryDeploymentRequest.fromPartial({
-        id: { owner: accounts[0].address, dseq },
+      const owner = accounts[0].address;
+
+      // Query deployment using chain SDK (v1beta4 API)
+      const deploymentRes = await chainSDK.akash.deployment.v1beta4.getDeployment({
+        id: {
+          owner,
+          dseq: BigInt(dseq),
+        },
       });
-      const deploymentRes = await deploymentClient.Deployment(queryReq);
-      
+
       if (!deploymentRes.deployment) {
-        return createOutput({ error: `Deployment ${dseq} not found for owner ${accounts[0].address}` });
+        return createOutput({ error: `Deployment ${dseq} not found for owner ${owner}` });
+      }
+
+      // Calculate resource totals from groups
+      const groups = (deploymentRes.groups || []) as unknown as DeploymentGroup[];
+      const resources = calculateResourceTotals(groups);
+
+      // Query leases for this deployment
+      let leases: LeaseResponse[] = [];
+      let providers: Array<Record<string, unknown>> = [];
+
+      try {
+        const leasesRes = await chainSDK.akash.market.v1beta5.getLeases({
+          filters: {
+            owner,
+            dseq: BigInt(dseq),
+          },
+        });
+
+        leases = (leasesRes.leases || []) as unknown as LeaseResponse[];
+
+        // Get provider details for each lease
+        const providerPromises = leases.map(async (lease) => {
+          try {
+            const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
+              owner: lease.lease?.id?.provider,
+            });
+            return {
+              address: lease.lease?.id?.provider,
+              hostUri: providerRes.provider?.hostUri,
+              attributes: providerRes.provider?.attributes,
+              info: providerRes.provider?.info,
+            };
+          } catch (error) {
+            return {
+              address: lease.lease?.id?.provider,
+              error: 'Could not fetch provider details',
+            };
+          }
+        });
+
+        providers = await Promise.all(providerPromises);
+      } catch (error) {
+        // Leases query may fail if deployment is not leased yet
+        console.error('Error querying leases:', error);
       }
 
       return createOutput({
-        deployment: deploymentRes.deployment,
+        deployment: {
+          ...deploymentRes.deployment,
+          // Include height information for timeline tracking
+          createdHeight: deploymentRes.deployment.createdAt,
+        },
         groups: deploymentRes.groups,
         escrowAccount: deploymentRes.escrowAccount,
+        resources,
+        leases: leases.map((lease, index: number) => ({
+          ...lease.lease,
+          price: lease.lease?.price,
+          provider: providers[index],
+        })),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error getting deployment:', error);
       return createOutput({
-        error: error.message || 'Unknown error getting deployment',
+        error: errorMessage || 'Unknown error getting deployment',
       });
     }
   },
 };
+
+// Helper function to calculate resource totals across all groups
+function calculateResourceTotals(groups: DeploymentGroup[]): {
+  cpu: { units: string; total: number };
+  memory: { units: string; total: number };
+  storage: { units: string; total: number };
+  gpu: { units: string; total: number };
+} {
+  let totalCpu = 0;
+  let totalMemory = 0;
+  let totalStorage = 0;
+  let totalGpu = 0;
+
+  for (const group of groups) {
+    const count = Number(group.state?.count || 0);
+
+    if (group.spec?.resources) {
+      const cpu = Number(group.spec.resources.cpu?.units?.val || 0);
+      const memory = Number(group.spec.resources.memory?.quantity?.val || 0);
+      const gpu = Number(group.spec.resources.gpu?.units?.val || 0);
+
+      totalCpu += cpu * count;
+      totalMemory += memory * count;
+      totalGpu += gpu * count;
+
+      // Sum storage from all volumes
+      if (group.spec.resources.storage) {
+        for (const storage of group.spec.resources.storage) {
+          const storageVal = Number(storage?.quantity?.val || 0);
+          totalStorage += storageVal * count;
+        }
+      }
+    }
+  }
+
+  return {
+    cpu: {
+      units: 'millicores',
+      total: totalCpu,
+    },
+    memory: {
+      units: 'bytes',
+      total: totalMemory,
+    },
+    storage: {
+      units: 'bytes',
+      total: totalStorage,
+    },
+    gpu: {
+      units: 'units',
+      total: totalGpu,
+    },
+  };
+}
