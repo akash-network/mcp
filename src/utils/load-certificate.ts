@@ -2,8 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { CertificateManager, type CertificatePem } from '@akashnetwork/chain-sdk';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import type { ChainNodeSDK } from '../types/index.js';
+import type { AkashWallet, ChainNodeSDK } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +43,7 @@ export function loadCertificateFromDisk(address: string): CertificatePem | null 
 }
 
 export async function loadCertificate(
-  wallet: DirectSecp256k1HdWallet,
+  wallet: AkashWallet,
   chainSDK?: ChainNodeSDK
 ): Promise<CertificatePem> {
   const accounts = await wallet.getAccounts();

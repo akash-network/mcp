@@ -38,7 +38,7 @@ This server provides a bridge between AI agents and the Akash Network, allowing 
 ## Prerequisites
 
 - Node.js (v18 or later)
-- An Akash wallet (mnemonic required for interaction with Akash Network)
+- An Akash wallet (a mnemonic or a hex-encoded private key is required for interaction with Akash Network)
 - Basic knowledge of Akash Network
 
 ## Installation
@@ -75,7 +75,7 @@ Make sure to replace `<path to dist/index.js>` with the path to the `dist/index.
       "command": "node",
       "args": ["<path to dist/index.js>"],
       "env": {
-        "AKASH_MNEMONIC": "<your mnemonic here>",
+        "AKASH_MNEMONIC": "<your mnemonic here>", // OR "AKASH_PRIVATE_KEY": "<your 64-character hex string>"
         "AKASH_RPC_URL": "https://rpc.akashnet.net:443" // optional, defaults to https://rpc.akashnet.net:443
       }
     }

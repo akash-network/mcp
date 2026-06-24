@@ -1,4 +1,3 @@
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import { loadWalletAndClient, loadCertificate, loadCertificateFromDisk } from './utils/index.js';
 import { SERVER_CONFIG } from './config.js';
@@ -23,10 +22,10 @@ import {
   GetLogsTool,
   ExecCommandTool,
 } from './tools/index.js';
-import type { ToolContext, ChainNodeSDK, StargateTxClient } from './types/index.js';
+import type { ToolContext, AkashWallet, ChainNodeSDK, StargateTxClient } from './types/index.js';
 
 class AkashMCP extends McpServer {
-  private wallet: DirectSecp256k1HdWallet | null = null;
+  private wallet: AkashWallet | null = null;
   private client: StargateTxClient | null = null;
   private certificate: CertificatePem | null = null;
   private chainSDK: ChainNodeSDK | null = null;
