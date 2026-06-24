@@ -6,6 +6,7 @@ export const SERVER_CONFIG = {
   rpcEndpoint: process.env.RPC_ENDPOINT || 'https://rpc.akashnet.net:443',
   grpcEndpoint: process.env.GRPC_ENDPOINT || 'https://akash-grpc.publicnode.com:443',
   mnemonic: process.env.AKASH_MNEMONIC || '',
+  privateKey: process.env.AKASH_PRIVATE_KEY || '',
 } as const;
 
 export type ServerConfig = typeof SERVER_CONFIG;
@@ -27,4 +28,24 @@ export function validateMnemonic(mnemonic: string): string {
   }
 
   return mnemonic.trim();
+}
+
+/** Validate a hex-encoded private key before wallet creation. Call at startup, not at import. */
+export function validatePrivateKey(privateKey: string): string {
+  const key = privateKey.trim().replace(/^0x/i, '');
+
+  if (key.length === 0) {
+    throw new Error(
+      'AKASH_PRIVATE_KEY environment variable is required. ' +
+      'Set it to your 64-character hex-encoded private key (32 bytes).'
+    );
+  }
+
+  if (!/^[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error(
+      'AKASH_PRIVATE_KEY must be a 64-character hex string (32 bytes).'
+    );
+  }
+
+  return key;
 }

@@ -24,14 +24,19 @@
     "@akashnetwork/chain-sdk": "^1.0.0-alpha.18",
     "@cosmjs/proto-signing": "^0.36.2",
     "@cosmjs/stargate": "^0.36.2",
-    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "fs": "0.0.1-security",
     "https": "^1.0.0",
-    "js-yaml": "^4.1.0",
-    "lodash": "^4.17.21",
+    "js-yaml": "^4.2.0",
+    "lodash": "^4.18.1",
     "path": "^0.12.7",
-    "ws": "^8.18.3",
+    "ws": "^8.21.0",
     "zod": "^4.3.6"
+  },
+  "overrides": {
+    "@cosmjs/socket": {
+      "ws": "^7.5.11"
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -40,7 +45,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
-    "@vitest/coverage-v8": "^4.0.13",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
@@ -48,6 +53,6 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.29.0",
-    "vitest": "^4.0.13"
+    "vitest": "^4.1.9"
   }
 }
