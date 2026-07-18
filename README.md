@@ -75,13 +75,22 @@ Make sure to replace `<path to dist/index.js>` with the path to the `dist/index.
       "command": "node",
       "args": ["<path to dist/index.js>"],
       "env": {
-        "AKASH_MNEMONIC": "<your mnemonic here>", // OR "AKASH_PRIVATE_KEY": "<your 64-character hex string>"
-        "AKASH_RPC_URL": "https://rpc.akashnet.net:443" // optional, defaults to https://rpc.akashnet.net:443
+        "AKASH_MNEMONIC_FILE": "/run/secrets/akash_mnemonic",
+        "AKASH_RPC_URL": "https://rpc.akashnet.net:443"
       }
     }
   }
 }
 ```
+
+`AKASH_RPC_URL` is optional and defaults to `https://rpc.akashnet.net:443`. Configure exactly one wallet credential source. For production, prefer a file mounted by your secret manager and restrict its permissions to the process user:
+
+- `AKASH_MNEMONIC_FILE`: path to a file containing a 12- or 24-word mnemonic
+- `AKASH_PRIVATE_KEY_FILE`: path to a file containing a 64-character hex private key
+- `AKASH_MNEMONIC`: direct mnemonic environment variable, for trusted ephemeral environments only
+- `AKASH_PRIVATE_KEY`: direct private-key environment variable, for trusted ephemeral environments only
+
+Never commit wallet credentials, add them to MCP configuration files, or include them in logs. File-backed secrets work well with Docker/Kubernetes secret mounts and operating-system secret-management launchers.
 
 ## Usage
 

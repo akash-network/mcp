@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 export const SERVER_CONFIG = {
   name: 'Akash-MCP-Server',
   version: '1.0.0',
@@ -10,6 +12,70 @@ export const SERVER_CONFIG = {
 } as const;
 
 export type ServerConfig = typeof SERVER_CONFIG;
+
+export type WalletCredential =
+  | { type: 'mnemonic'; value: string }
+  | { type: 'privateKey'; value: string };
+
+type Environment = Record<string, string | undefined>;
+
+interface CredentialSource {
+  type: WalletCredential['type'];
+  environmentVariable: string;
+  value?: string;
+  file?: boolean;
+}
+
+function readSecretFile(environmentVariable: string, filePath: string): string {
+  try {
+    const value = fs.readFileSync(filePath, 'utf8').trim();
+    if (!value) {
+      throw new Error(`${environmentVariable} points to an empty file`);
+    }
+    return value;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('points to an empty file')) {
+      throw error;
+    }
+    throw new Error(`Unable to read the secret file configured by ${environmentVariable}`);
+  }
+}
+
+/**
+ * Resolves exactly one wallet credential. File-backed values are intended for
+ * secret-manager mounts and keep wallet material out of MCP configuration.
+ */
+export function resolveWalletCredential(environment: Environment = process.env): WalletCredential {
+  const credentialSources: CredentialSource[] = [
+    { type: 'mnemonic' as const, environmentVariable: 'AKASH_MNEMONIC', value: environment.AKASH_MNEMONIC },
+    { type: 'mnemonic' as const, environmentVariable: 'AKASH_MNEMONIC_FILE', value: environment.AKASH_MNEMONIC_FILE, file: true },
+    { type: 'privateKey' as const, environmentVariable: 'AKASH_PRIVATE_KEY', value: environment.AKASH_PRIVATE_KEY },
+    { type: 'privateKey' as const, environmentVariable: 'AKASH_PRIVATE_KEY_FILE', value: environment.AKASH_PRIVATE_KEY_FILE, file: true },
+  ];
+  const sources = credentialSources.filter(
+    (source): source is CredentialSource & { value: string } => Boolean(source.value?.trim())
+  );
+
+  if (sources.length === 0) {
+    throw new Error(
+      'Configure exactly one of AKASH_MNEMONIC, AKASH_MNEMONIC_FILE, AKASH_PRIVATE_KEY, or AKASH_PRIVATE_KEY_FILE.'
+    );
+  }
+
+  if (sources.length > 1) {
+    throw new Error(
+      'Multiple wallet credential sources are configured. Set exactly one of AKASH_MNEMONIC, AKASH_MNEMONIC_FILE, AKASH_PRIVATE_KEY, or AKASH_PRIVATE_KEY_FILE.'
+    );
+  }
+
+  const source = sources[0];
+  const sourceValue = source.value.trim();
+  const value = source.file
+    ? readSecretFile(source.environmentVariable, sourceValue)
+    : sourceValue;
+
+  return { type: source.type, value };
+}
 
 /** Validate mnemonic before wallet creation. Call at startup, not at import. */
 export function validateMnemonic(mnemonic: string): string {
