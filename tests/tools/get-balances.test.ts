@@ -21,9 +21,9 @@ describe('GetBalancesTool', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject missing address', () => {
+    it('should allow a missing address', () => {
       const result = GetBalancesTool.parameters.safeParse({});
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
     it('should reject empty address', () => {
@@ -63,6 +63,38 @@ describe('GetBalancesTool', () => {
       expect(mockContext.chainSDK.cosmos.bank.v1beta1.getAllBalances).toHaveBeenCalledWith({
         address: 'akash1abc',
       });
+    });
+
+    it('should query the configured wallet when address is omitted', async () => {
+      const getAllBalances = vi.fn().mockResolvedValue({ balances: [] });
+      const mockContext = {
+        wallet: {
+          getAccounts: vi.fn().mockResolvedValue([{ address: 'akash1wallet' }]),
+        },
+        chainSDK: {
+          cosmos: {
+            bank: {
+              v1beta1: { getAllBalances },
+            },
+          },
+        },
+      } as unknown as ToolContext;
+
+      await GetBalancesTool.handler({}, mockContext);
+
+      expect(mockContext.wallet.getAccounts).toHaveBeenCalledOnce();
+      expect(getAllBalances).toHaveBeenCalledWith({ address: 'akash1wallet' });
+    });
+
+    it('should report when the configured wallet has no account', async () => {
+      const mockContext = {
+        wallet: { getAccounts: vi.fn().mockResolvedValue([]) },
+        chainSDK: {},
+      } as unknown as ToolContext;
+
+      const result = await GetBalancesTool.handler({}, mockContext);
+
+      expect(JSON.parse(result.content[0].text)).toEqual({ error: 'No accounts found in wallet' });
     });
 
     it('should handle errors gracefully', async () => {
