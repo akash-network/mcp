@@ -7,6 +7,7 @@ const parameters = z.object({
   rawSDL: z.string().min(1),
   deposit: z.number().min(1),
   currency: z.string().min(1),
+  confirm: z.literal(true).describe('Set to true to confirm creating this funded deployment on-chain.'),
 });
 
 export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
@@ -14,7 +15,7 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
   description:
     'Create a new deployment on Akash Network using the provided SDL (Service Definition Language) string, deposit amount and currency.' +
     'The deposit amount is the amount of tokens to deposit into the deployment.' +
-    'Minimum deposit amount is 500000 uakt.',
+    'Minimum deposit amount is 500000 uakt. This submits an on-chain transaction and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { rawSDL } = params;

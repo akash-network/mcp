@@ -2,13 +2,15 @@ import { z } from 'zod/v3';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import { createOutput } from '../utils/create-output.js';
 
-const parameters = z.object({});
+const parameters = z.object({
+  confirm: z.literal(true).describe('Set to true to confirm revoking all valid certificates on-chain.'),
+});
 
 export const RevokeAllCertificatesTool: ToolDefinition<typeof parameters> = {
   name: 'revoke-all-certificates',
   description:
     'Revoke ALL certificates on Akash Network for this account. ' +
-    'Use this to clean up old certificates when getting 401 errors.',
+    'Use this to clean up old certificates when getting 401 errors. This submits on-chain transactions and requires confirm: true.',
   parameters,
   handler: async (_params: z.infer<typeof parameters>, context: ToolContext) => {
     const { wallet, chainSDK } = context;

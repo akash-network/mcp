@@ -6,11 +6,13 @@ const parameters = z.object({
   address: z.string().min(1, 'Akash account address is required'),
   dseq: z.number().int().positive(),
   amount: z.string().min(1, 'Amount of uakt to add is required'),
+  confirm: z.literal(true).describe('Set to true to confirm this irreversible on-chain escrow deposit.'),
 });
 
 export const AddFundsTool: ToolDefinition<typeof parameters> = {
   name: 'add-funds',
-  description: 'Deposit additional AKT (uakt) into a deployment escrow account.',
+  description:
+    'Deposit additional AKT (uakt) into a deployment escrow account. This submits an on-chain transaction and requires confirm: true.',
   parameters,
   handler: async (params, context) => {
     const { address, dseq, amount } = params;

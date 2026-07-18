@@ -9,14 +9,16 @@ import { createOutput, pemToUint8Array } from '../utils/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const parameters = z.object({});
+const parameters = z.object({
+  confirm: z.literal(true).describe('Set to true to confirm revoking certificates and creating a replacement on-chain.'),
+});
 
 export const RegenerateCertificateTool: ToolDefinition<typeof parameters> = {
   name: 'regenerate-certificate',
   description:
     'Regenerate the Akash certificate. Use this when getting 401 errors on manifest send. ' +
     'This will revoke all existing certificates, delete the local certificate, create a new one, ' +
-    'and broadcast it to the chain. The new certificate will be used for all subsequent operations.',
+    'and broadcast it to the chain. The new certificate will be used for all subsequent operations. Requires confirm: true.',
   parameters,
   handler: async (_params: z.infer<typeof parameters>, context: ToolContext) => {
     const { wallet, chainSDK, reloadCertificate } = context;

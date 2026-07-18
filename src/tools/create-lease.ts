@@ -8,12 +8,13 @@ const parameters = z.object({
   gseq: z.number().min(1),
   oseq: z.number().min(1),
   provider: z.string().min(1),
+  confirm: z.literal(true).describe('Set to true to confirm accepting this provider lease on-chain.'),
 });
 
 export const CreateLeaseTool: ToolDefinition<typeof parameters> = {
   name: 'create-lease',
   description:
-    'Create a lease on Akash Network using the provided owner, dseq, gseq, oseq and provider from a bid.',
+    'Create a lease on Akash Network using the provided owner, dseq, gseq, oseq and provider from a bid. This submits an on-chain transaction and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { chainSDK } = context;

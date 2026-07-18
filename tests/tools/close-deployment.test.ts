@@ -17,6 +17,7 @@ describe('CloseDeploymentTool', () => {
     it('should accept valid dseq', () => {
       const result = CloseDeploymentTool.parameters.safeParse({
         dseq: 12345,
+        confirm: true,
       });
       expect(result.success).toBe(true);
     });
@@ -60,7 +61,7 @@ describe('CloseDeploymentTool', () => {
       } as unknown as ToolContext;
 
       const result = await CloseDeploymentTool.handler(
-        { dseq: 12345 },
+        { dseq: 12345, confirm: true },
         mockContext
       );
 
@@ -86,7 +87,7 @@ describe('CloseDeploymentTool', () => {
       } as unknown as ToolContext;
 
       const result = await CloseDeploymentTool.handler(
-        { dseq: 12345 },
+        { dseq: 12345, confirm: true },
         mockContext
       );
 
@@ -111,7 +112,7 @@ describe('CloseDeploymentTool', () => {
       } as unknown as ToolContext;
 
       const result = await CloseDeploymentTool.handler(
-        { dseq: 12345 },
+        { dseq: 12345, confirm: true },
         mockContext
       );
 
