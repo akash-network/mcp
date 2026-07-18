@@ -116,6 +116,9 @@ The server provides the following tools for AI agents:
 
 - **GetAccountAddrTool**: Retrieve your Akash account address
 - **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
+- **GetActConversionStatusTool**: Check whether BME currently permits ACT mints and refunds
+- **MintActTool**: Convert AKT (uakt) into ACT (uact) for deployment escrow
+- **BurnActTool**: Convert unused ACT (uact) back into AKT (uakt)
 - **GetBidsTool**: Get bids for deployments
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
 - **GetDeploymentTool**: Get deployment details including status, groups, and escrow account

@@ -35,7 +35,7 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
     'Get the services and their URIs for a lease on Akash Network using the provided owner, dseq, gseq, oseq and provider.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { wallet, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     // Create lease object with our custom type
     const lease: CustomLease = {
@@ -61,7 +61,7 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
       const providerInfo = providerRes.provider;
 
       // Query lease status
-      const token = await createProviderToken(wallet, 'status', lease.id);
+      const token = await createProviderToken(jwtSigner, 'status', lease.id);
       const leaseStatus = await queryLeaseStatus(lease, providerInfo.hostUri, token);
 
       return createOutput(leaseStatus);

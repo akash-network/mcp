@@ -43,7 +43,7 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
     'Execute a shell command in a running deployment container. Similar to "kubectl exec" or "docker exec". Useful for debugging, checking files, restarting services, or making quick config changes without redeploying.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { wallet, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     try {
       // Query provider using chain SDK (v1beta4 API)
@@ -67,7 +67,7 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
           provider: params.provider,
         },
         providerInfo.hostUri,
-        await createProviderToken(wallet, 'shell', {
+        await createProviderToken(jwtSigner, 'shell', {
           provider: params.provider,
           dseq: params.dseq,
           gseq: params.gseq,

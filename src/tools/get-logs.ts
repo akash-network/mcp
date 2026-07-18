@@ -46,7 +46,7 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
     'Get container logs for a deployment. Uses WebSocket connection to provider. Useful for debugging deployment issues.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { wallet, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     try {
       // Query provider using chain SDK (v1beta4 API)
@@ -70,7 +70,7 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
           provider: params.provider,
         },
         providerInfo.hostUri,
-        await createProviderToken(wallet, 'logs', {
+        await createProviderToken(jwtSigner, 'logs', {
           provider: params.provider,
           dseq: params.dseq,
           gseq: params.gseq,

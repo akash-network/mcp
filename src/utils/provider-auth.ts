@@ -3,7 +3,7 @@ import {
   type JwtTokenAccessScope,
   type LeasePermission,
 } from '@akashnetwork/chain-sdk';
-import type { AkashWallet } from '../types/index.js';
+import type { AkashJwtSigner } from '../types/index.js';
 
 const PROVIDER_TOKEN_TTL_SECONDS = 15 * 60;
 
@@ -16,7 +16,7 @@ export interface ProviderLeaseScope {
 }
 
 export async function createProviderToken(
-  wallet: AkashWallet,
+  wallet: AkashJwtSigner,
   scope: JwtTokenAccessScope,
   lease: ProviderLeaseScope,
   now = Math.floor(Date.now() / 1000)
