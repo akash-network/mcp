@@ -27,6 +27,7 @@ This server provides a bridge between AI agents and the Akash Network, allowing 
 
 - **Wallet and Client Management**: Handles Akash wallet authentication and client initialization
 - **Certificate Management**: Manages Akash certificates
+- **Secure Provider Authentication**: Uses short-lived, lease-scoped JWTs over hostname-verified TLS
 - **Tools for Akash Interaction**:
   - Account address retrieval
   - Deployment creation, querying, updating, and termination
@@ -103,12 +104,21 @@ npm run dev:watch
 
 The server exposes a standard MCP interface that can be used by AI models to interact with the Akash Network. It uses the stdio transport by default, making it compatible with most MCP clients.
 
+### Provider authentication
+
+Provider API requests use Akash's recommended JWT authentication. The server signs a new token for each operation, limits it to the exact provider and action, narrows it to the lease and service whenever the request identifies a service, and expires it after 15 minutes. HTTPS and WebSocket connections use the provider hostname from its on-chain URI and Node.js's normal certificate verification.
+
+Provider endpoints must therefore publish an `https://` URI with a certificate trusted for that hostname. Connections to plaintext, self-signed, expired, or hostname-mismatched endpoints fail closed; the server does not provide an insecure TLS fallback.
+
 ## Available Tools
 
 The server provides the following tools for AI agents:
 
 - **GetAccountAddrTool**: Retrieve your Akash account address
 - **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
+- **GetActConversionStatusTool**: Check whether BME currently permits ACT mints and refunds
+- **MintActTool**: Convert AKT (uakt) into ACT (uact) for deployment escrow
+- **BurnActTool**: Convert unused ACT (uact) back into AKT (uakt)
 - **GetBidsTool**: Get bids for deployments
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
 - **GetDeploymentTool**: Get deployment details including status, groups, and escrow account

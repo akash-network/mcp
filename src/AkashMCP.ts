@@ -21,11 +21,21 @@ import {
   RegenerateCertificateTool,
   GetLogsTool,
   ExecCommandTool,
+  BurnActTool,
+  GetActConversionStatusTool,
+  MintActTool,
 } from './tools/index.js';
-import type { ToolContext, AkashWallet, ChainNodeSDK, StargateTxClient } from './types/index.js';
+import type {
+  ToolContext,
+  AkashJwtSigner,
+  AkashWallet,
+  ChainNodeSDK,
+  StargateTxClient,
+} from './types/index.js';
 
 class AkashMCP extends McpServer {
   private wallet: AkashWallet | null = null;
+  private jwtSigner: AkashJwtSigner | null = null;
   private client: StargateTxClient | null = null;
   private certificate: CertificatePem | null = null;
   private chainSDK: ChainNodeSDK | null = null;
@@ -50,13 +60,14 @@ class AkashMCP extends McpServer {
     } else if (!this.certificate) {
       throw new Error(
         'No certificate available. The on-disk certificate is missing and no in-memory ' +
-        'certificate exists. Run regenerate-certificate to create a new one.'
+          'certificate exists. Run regenerate-certificate to create a new one.'
       );
     }
 
     return {
       client: this.client!,
       wallet: this.wallet!,
+      jwtSigner: this.jwtSigner!,
       certificate: this.certificate!,
       chainSDK: this.chainSDK!,
       reloadCertificate: this.reloadCertificate.bind(this),
@@ -80,8 +91,9 @@ class AkashMCP extends McpServer {
 
   public async initialize() {
     try {
-      const { wallet, client, chainSDK } = await loadWalletAndClient();
+      const { wallet, jwtSigner, client, chainSDK } = await loadWalletAndClient();
       this.wallet = wallet;
+      this.jwtSigner = jwtSigner;
       this.client = client;
       this.chainSDK = chainSDK;
       this.certificate = await loadCertificate(wallet, chainSDK);
@@ -120,11 +132,8 @@ class AkashMCP extends McpServer {
       async (args) => GetSDLsTool.handler(args, await this.getToolContext())
     );
 
-    this.tool(
-      GetSDLTool.name,
-      GetSDLTool.description,
-      GetSDLTool.parameters.shape,
-      async (args) => GetSDLTool.handler(args, await this.getToolContext())
+    this.tool(GetSDLTool.name, GetSDLTool.description, GetSDLTool.parameters.shape, async (args) =>
+      GetSDLTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
@@ -167,6 +176,27 @@ class AkashMCP extends McpServer {
       GetBalancesTool.description,
       GetBalancesTool.parameters.shape,
       async (args) => GetBalancesTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      GetActConversionStatusTool.name,
+      GetActConversionStatusTool.description,
+      GetActConversionStatusTool.parameters.shape,
+      async (args) => GetActConversionStatusTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      MintActTool.name,
+      MintActTool.description,
+      MintActTool.parameters.shape,
+      async (args) => MintActTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      BurnActTool.name,
+      BurnActTool.description,
+      BurnActTool.parameters.shape,
+      async (args) => BurnActTool.handler(args, await this.getToolContext())
     );
 
     this.tool(
@@ -217,10 +247,15 @@ class AkashMCP extends McpServer {
       ExecCommandTool.parameters.shape,
       async (args) => ExecCommandTool.handler(args, await this.getToolContext())
     );
-
   }
   public isInitialized(): boolean {
-    return this.wallet !== null && this.client !== null && this.certificate !== null && this.chainSDK !== null;
+    return (
+      this.wallet !== null &&
+      this.jwtSigner !== null &&
+      this.client !== null &&
+      this.certificate !== null &&
+      this.chainSDK !== null
+    );
   }
 }
 

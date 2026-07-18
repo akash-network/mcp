@@ -1,7 +1,7 @@
 import { z } from 'zod/v3';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import { SDL } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
+import { getManifestVersion, parseSDL } from '../utils/parse-sdl.js';
 
 const parameters = z.object({
   rawSDL: z.string().min(1),
@@ -14,15 +14,14 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
   description:
     'Create a new deployment on Akash Network using the provided SDL (Service Definition Language) string, deposit amount and currency.' +
     'The deposit amount is the amount of tokens to deposit into the deployment.' +
-    'Minimum deposit amount is 500000 uakt.',
+    'Current Akash mainnet deployment escrow uses ACT (uact); check current chain parameters for the minimum deposit.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { rawSDL } = params;
     const { wallet, chainSDK } = context;
 
     try {
-      // Parse SDL directly from the string using chain-sdk
-      const sdl = SDL.fromString(rawSDL, 'beta3');
+      const sdl = parseSDL(rawSDL);
 
       const accounts = await wallet.getAccounts();
       if (!accounts || accounts.length === 0) {
@@ -34,10 +33,7 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
       const blockHeight = Number(statusResponse.block?.header?.height || 0);
 
       // Get groups from SDL
-      const groups = sdl.groups();
-
-      // Get manifest hash
-      const hash = await sdl.manifestVersion();
+      const hash = await getManifestVersion(sdl);
 
       // Create deployment using chain SDK (v1beta4 API)
       const result = await chainSDK.akash.deployment.v1beta4.createDeployment({
@@ -45,7 +41,7 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
           owner: accounts[0].address,
           dseq: BigInt(blockHeight),
         },
-        groups: groups,
+        groups: sdl.groupSpecs,
         hash: hash,
         deposit: {
           amount: {
@@ -54,6 +50,7 @@ export const CreateDeploymentTool: ToolDefinition<typeof parameters> = {
           },
           sources: [1], // Source.balance = 1
         },
+        reclamation: sdl.reclamation,
       });
 
       return createOutput({

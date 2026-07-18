@@ -1,19 +1,24 @@
 import type { z } from 'zod/v3';
+import type { Secp256k1HdWallet, Secp256k1Wallet } from '@cosmjs/amino';
 import type { DirectSecp256k1HdWallet, DirectSecp256k1Wallet } from '@cosmjs/proto-signing';
 import type { ReadResourceCallback } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CertificatePem } from '@akashnetwork/chain-sdk';
 
 // Chain SDK types
 export type ChainNodeSDK = ReturnType<typeof import('@akashnetwork/chain-sdk').createChainNodeSDK>;
-export type StargateTxClient = ReturnType<typeof import('@akashnetwork/chain-sdk').createStargateClient>;
+export type StargateTxClient = ReturnType<
+  typeof import('@akashnetwork/chain-sdk').createStargateClient
+>;
 
 // A wallet created from either a mnemonic (HD wallet) or a raw private key.
 export type AkashWallet = DirectSecp256k1HdWallet | DirectSecp256k1Wallet;
+export type AkashJwtSigner = Secp256k1HdWallet | Secp256k1Wallet;
 
 // Tool related types
 export interface ToolContext {
   client: StargateTxClient;
   wallet: AkashWallet;
+  jwtSigner: AkashJwtSigner;
   certificate: CertificatePem;
   chainSDK: ChainNodeSDK;
   reloadCertificate?: () => Promise<CertificatePem>;

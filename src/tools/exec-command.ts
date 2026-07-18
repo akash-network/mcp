@@ -1,10 +1,12 @@
 import { z } from 'zod/v3';
-import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import https from 'https';
 import WebSocket from 'ws';
 import { createOutput } from '../utils/create-output.js';
-import type { ClientRequestArgs } from 'http';
+import {
+  createProviderHeaders,
+  createProviderToken,
+  createProviderUrl,
+} from '../utils/provider-auth.js';
 
 const parameters = z.object({
   owner: z.string().min(1),
@@ -12,8 +14,11 @@ const parameters = z.object({
   gseq: z.number().min(1),
   oseq: z.number().min(1),
   provider: z.string().min(1),
-  service: z.string().optional().describe('Service name to execute command in (required if deployment has multiple services)'),
-  command: z.string().min(1).describe('Shell command to execute (e.g., "ls -la", "cat /etc/pingap/certs/origin.crt")'),
+  service: z.string().min(1).describe('Service name to execute the command in'),
+  command: z
+    .string()
+    .min(1)
+    .describe('Shell command to execute (e.g., "ls -la", "cat /etc/pingap/certs/origin.crt")'),
   stdin: z.boolean().optional().default(false).describe('Enable stdin for interactive commands'),
   tty: z.boolean().optional().default(true).describe('Allocate a pseudo-TTY'),
 });
@@ -38,7 +43,7 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
     'Execute a shell command in a running deployment container. Similar to "kubectl exec" or "docker exec". Useful for debugging, checking files, restarting services, or making quick config changes without redeploying.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { certificate, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     try {
       // Query provider using chain SDK (v1beta4 API)
@@ -62,7 +67,13 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
           provider: params.provider,
         },
         providerInfo.hostUri,
-        certificate,
+        await createProviderToken(jwtSigner, 'shell', {
+          provider: params.provider,
+          dseq: params.dseq,
+          gseq: params.gseq,
+          oseq: params.oseq,
+          services: [params.service],
+        }),
         params.command,
         params.service,
         params.stdin ?? false,
@@ -80,17 +91,15 @@ export const ExecCommandTool: ToolDefinition<typeof parameters> = {
 async function executeCommand(
   leaseId: LeaseID,
   providerUri: string,
-  certificate: CertificatePem,
+  token: string,
   command: string,
-  service: string | undefined,
+  service: string,
   stdin: boolean,
   tty: boolean
 ): Promise<string> {
-  const uri = new URL(providerUri);
-
   // Build the WebSocket URL with query params
   // Path: /lease/{dseq}/{gseq}/{oseq}/shell
-  // The command is passed as query params: cmd=sh&cmd=-c&cmd=<command>
+  // JWT-authenticated provider shell endpoints use indexed command parameters.
   let shellPath = `/lease/${leaseId.dseq}/${leaseId.gseq}/${leaseId.oseq}/shell`;
 
   // Build query string
@@ -99,42 +108,27 @@ async function executeCommand(
   // Add stdin and tty flags
   queryParams.set('stdin', stdin ? '1' : '0');
   queryParams.set('tty', tty ? '1' : '0');
+  queryParams.set('podIndex', '0');
 
   // Add command as shell -c "command"
-  queryParams.append('cmd', 'sh');
-  queryParams.append('cmd', '-c');
-  queryParams.append('cmd', command);
+  queryParams.set('cmd0', 'sh');
+  queryParams.set('cmd1', '-c');
+  queryParams.set('cmd2', command);
 
-  // Add service filter if specified
-  if (service) {
-    queryParams.set('service', service);
-  }
+  queryParams.set('service', service);
 
   shellPath += '?' + queryParams.toString();
 
-  const wsUrl = `wss://${uri.hostname}:${uri.port || 8443}${shellPath}`;
+  const wsUrl = createProviderUrl(providerUri, shellPath, 'websocket');
 
   return new Promise<string>((resolve, reject) => {
     const outputLines: string[] = [];
     let resolved = false;
     let exitCode: number | undefined;
 
-    // Create HTTPS agent with mTLS credentials
-    const agent = new https.Agent({
-      cert: certificate.cert,
-      key: certificate.privateKey,
-      rejectUnauthorized: false,
-      // Use 'localhost' as SNI to trigger mTLS mode on the provider
-      servername: 'localhost',
-    });
-
-    // Create WebSocket with mTLS via agent
     const ws = new WebSocket(wsUrl, {
-      agent,
-      headers: {
-        'Host': 'localhost',
-      },
-    } as ClientRequestArgs);
+      headers: createProviderHeaders(token),
+    });
 
     const timeout = setTimeout(() => {
       if (!resolved) {
@@ -205,7 +199,9 @@ async function executeCommand(
         } else if (code === 4001) {
           resolve('Error: Lease not found');
         } else if (code === 4002) {
-          resolve('Error: Service not found. Specify the service name with the "service" parameter.');
+          resolve(
+            'Error: Service not found. Specify the service name with the "service" parameter.'
+          );
         } else {
           resolve(`Command completed (connection closed with code ${code})`);
         }

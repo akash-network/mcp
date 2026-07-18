@@ -1,10 +1,12 @@
 import { z } from 'zod/v3';
-import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
-import https from 'https';
 import WebSocket from 'ws';
 import { createOutput } from '../utils/create-output.js';
-import type { ClientRequestArgs } from 'http';
+import {
+  createProviderHeaders,
+  createProviderToken,
+  createProviderUrl,
+} from '../utils/provider-auth.js';
 
 const parameters = z.object({
   owner: z.string().min(1),
@@ -12,8 +14,17 @@ const parameters = z.object({
   gseq: z.number().min(1),
   oseq: z.number().min(1),
   provider: z.string().min(1),
-  service: z.string().optional().describe('Optional service name to filter logs (e.g., "infisical", "postgres"). If not provided, returns logs from all services.'),
-  tail: z.number().optional().default(100).describe('Number of lines to return from the end of the logs'),
+  service: z
+    .string()
+    .optional()
+    .describe(
+      'Optional service name to filter logs (e.g., "infisical", "postgres"). If not provided, returns logs from all services.'
+    ),
+  tail: z
+    .number()
+    .optional()
+    .default(100)
+    .describe('Number of lines to return from the end of the logs'),
 });
 
 interface LeaseID {
@@ -35,7 +46,7 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
     'Get container logs for a deployment. Uses WebSocket connection to provider. Useful for debugging deployment issues.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { certificate, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     try {
       // Query provider using chain SDK (v1beta4 API)
@@ -59,7 +70,13 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
           provider: params.provider,
         },
         providerInfo.hostUri,
-        certificate,
+        await createProviderToken(jwtSigner, 'logs', {
+          provider: params.provider,
+          dseq: params.dseq,
+          gseq: params.gseq,
+          oseq: params.oseq,
+          ...(params.service ? { services: [params.service] } : {}),
+        }),
         params.service,
         params.tail || 100
       );
@@ -75,12 +92,10 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
 async function queryLeaseLogs(
   leaseId: LeaseID,
   providerUri: string,
-  certificate: CertificatePem,
+  token: string,
   service: string | undefined,
   tail: number
 ): Promise<string> {
-  const uri = new URL(providerUri);
-
   // Build the WebSocket URL with query params
   // Path: /lease/{dseq}/{gseq}/{oseq}/logs
   let logsPath = `/lease/${leaseId.dseq}/${leaseId.gseq}/${leaseId.oseq}/logs?follow=false&tail=${tail}`;
@@ -88,28 +103,15 @@ async function queryLeaseLogs(
     logsPath += `&services=${encodeURIComponent(service)}`;
   }
 
-  const wsUrl = `wss://${uri.hostname}:${uri.port || 8443}${logsPath}`;
+  const wsUrl = createProviderUrl(providerUri, logsPath, 'websocket');
 
   return new Promise<string>((resolve, reject) => {
     const logLines: string[] = [];
     let resolved = false;
 
-    // Create HTTPS agent with mTLS credentials
-    const agent = new https.Agent({
-      cert: certificate.cert,
-      key: certificate.privateKey,
-      rejectUnauthorized: false,
-      // Use 'localhost' as SNI to trigger mTLS mode on the provider
-      servername: 'localhost',
-    });
-
-    // Create WebSocket with mTLS via agent
     const ws = new WebSocket(wsUrl, {
-      agent,
-      headers: {
-        'Host': 'localhost',
-      },
-    } as ClientRequestArgs);
+      headers: createProviderHeaders(token),
+    });
 
     const timeout = setTimeout(() => {
       if (!resolved) {

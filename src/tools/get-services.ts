@@ -1,8 +1,12 @@
 import { z } from 'zod/v3';
-import type { CertificatePem } from '@akashnetwork/chain-sdk';
 import type { ToolDefinition, ToolContext } from '../types/index.js';
 import https from 'https';
 import { createOutput } from '../utils/create-output.js';
+import {
+  createProviderHeaders,
+  createProviderToken,
+  createProviderUrl,
+} from '../utils/provider-auth.js';
 
 const parameters = z.object({
   owner: z.string().min(1),
@@ -31,7 +35,7 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
     'Get the services and their URIs for a lease on Akash Network using the provided owner, dseq, gseq, oseq and provider.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { certificate, chainSDK } = context;
+    const { jwtSigner, chainSDK } = context;
 
     // Create lease object with our custom type
     const lease: CustomLease = {
@@ -57,7 +61,8 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
       const providerInfo = providerRes.provider;
 
       // Query lease status
-      const leaseStatus = await queryLeaseStatus(lease, providerInfo.hostUri, certificate);
+      const token = await createProviderToken(jwtSigner, 'status', lease.id);
+      const leaseStatus = await queryLeaseStatus(lease, providerInfo.hostUri, token);
 
       return createOutput(leaseStatus);
     } catch (error: unknown) {
@@ -67,37 +72,22 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
   },
 };
 
-async function queryLeaseStatus(lease: CustomLease, providerUri: string, certificate: CertificatePem) {
+async function queryLeaseStatus(lease: CustomLease, providerUri: string, token: string) {
   const id = lease.id;
-
-  if (id === undefined) {
-    throw new Error('Lease ID is undefined');
-  }
 
   const leasePath = `/lease/${id.dseq}/${id.gseq}/${id.oseq}/status`;
 
-  const agent = new https.Agent({
-    cert: certificate.cert,
-    key: certificate.privateKey,
-    rejectUnauthorized: false,
-    // Use 'localhost' as SNI to trigger mTLS mode on the provider
-    servername: 'localhost',
-  });
-
-  const uri = new URL(providerUri);
+  const url = createProviderUrl(providerUri, leasePath);
 
   return await new Promise<{ services: Record<string, { uris: string[] }> }>((resolve, reject) => {
     const req = https.request(
+      url,
       {
-        hostname: uri.hostname,
-        port: uri.port,
-        path: leasePath,
         method: 'GET',
-        headers: {
+        headers: createProviderHeaders(token, {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-        },
-        agent: agent,
+        }),
       },
       (res) => {
         if (res.statusCode !== 200) {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createOutput } from '../../src/utils/create-output.js';
 
 describe('createOutput', () => {
@@ -56,5 +56,14 @@ describe('createOutput', () => {
     const result = createOutput(complex);
 
     expect(JSON.parse(result.content[0].text)).toEqual(complex);
+  });
+
+  it('serializes bigint values returned by current chain SDK queries', () => {
+    const output = createOutput({ dseq: 123n, nested: { height: 456n } });
+
+    expect(JSON.parse(output.content[0].text)).toEqual({
+      dseq: '123',
+      nested: { height: '456' },
+    });
   });
 });
