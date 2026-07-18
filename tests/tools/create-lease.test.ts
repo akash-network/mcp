@@ -20,6 +20,7 @@ describe('CreateLeaseTool', () => {
       gseq: 1,
       oseq: 1,
       provider: 'akash1provider',
+      confirm: true,
     };
 
     it('should accept valid parameters', () => {
@@ -104,6 +105,7 @@ describe('CreateLeaseTool', () => {
           gseq: 1,
           oseq: 1,
           provider: 'akash1provider',
+          confirm: true,
         },
         mockContext
       );

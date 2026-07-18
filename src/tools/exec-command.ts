@@ -16,6 +16,7 @@ const parameters = z.object({
   command: z.string().min(1).describe('Shell command to execute (e.g., "ls -la", "cat /etc/pingap/certs/origin.crt")'),
   stdin: z.boolean().optional().default(false).describe('Enable stdin for interactive commands'),
   tty: z.boolean().optional().default(true).describe('Allocate a pseudo-TTY'),
+  confirm: z.literal(true).describe('Set to true to confirm executing this command in the provider container.'),
 });
 
 interface LeaseID {
@@ -35,7 +36,7 @@ interface ShellMessage {
 export const ExecCommandTool: ToolDefinition<typeof parameters> = {
   name: 'exec-command',
   description:
-    'Execute a shell command in a running deployment container. Similar to "kubectl exec" or "docker exec". Useful for debugging, checking files, restarting services, or making quick config changes without redeploying.',
+    'Execute a shell command in a running deployment container. Similar to "kubectl exec" or "docker exec". Commands can change deployed state and require confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { certificate, chainSDK } = context;

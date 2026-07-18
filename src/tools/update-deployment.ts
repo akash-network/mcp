@@ -9,6 +9,7 @@ const parameters = z.object({
   rawSDL: z.string().min(1),
   provider: z.string().min(1),
   dseq: z.number().min(1),
+  confirm: z.literal(true).describe('Set to true to confirm updating this deployment and sending its manifest.'),
 });
 
 export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
@@ -16,7 +17,7 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
   description:
     'Update a deployment on Akash Network using the provided SDL (Service Definition Language) string. This tool also sends the manifest to the provider.' +
     'The dseq is the deployment sequence number.' +
-    'The provider is the provider of the lease.',
+    'The provider is the provider of the lease. This changes on-chain and provider-side state and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { rawSDL, provider } = params;

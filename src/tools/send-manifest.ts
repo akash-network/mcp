@@ -12,12 +12,13 @@ const parameters = z.object({
   gseq: z.number().min(1),
   oseq: z.number().min(1),
   provider: z.string().min(1),
+  confirm: z.literal(true).describe('Set to true to confirm sending this manifest to the provider.'),
 });
 
 export const SendManifestTool: ToolDefinition<typeof parameters> = {
   name: 'send-manifest',
   description:
-    'Send a manifest to a provider using the provided SDL, owner, dseq, gseq, oseq and provider.',
+    'Send a manifest to a provider using the provided SDL, owner, dseq, gseq, oseq and provider. This changes provider-side state and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { certificate, chainSDK } = context;

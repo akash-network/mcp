@@ -4,13 +4,14 @@ import { createOutput } from '../utils/create-output.js';
 
 const parameters = z.object({
   serial: z.string().min(1).describe('The certificate serial number to revoke'),
+  confirm: z.literal(true).describe('Set to true to confirm revoking this certificate on-chain.'),
 });
 
 export const RevokeCertificateTool: ToolDefinition<typeof parameters> = {
   name: 'revoke-certificate',
   description:
     'Revoke a certificate on Akash Network. ' +
-    'The serial is the certificate serial number to revoke.',
+    'The serial is the certificate serial number to revoke. This submits an on-chain transaction and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { serial } = params;

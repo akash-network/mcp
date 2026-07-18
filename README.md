@@ -121,6 +121,10 @@ The server provides the following tools for AI agents:
 - **GetServicesTool**: Get information about active services
 - **UpdateDeploymentTool**: Update a deployment on Akash Network
 
+### Safety confirmations
+
+Tools that can submit an on-chain transaction, modify provider state, or execute a command in a deployment require `confirm: true`. MCP clients also receive read-only and destructive-operation annotations for every tool. Review the requested action and its parameters before setting this flag.
+
 ## Development
 
 ### Linting and Formatting

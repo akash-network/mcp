@@ -4,13 +4,14 @@ import { createOutput } from '../utils/create-output.js';
 
 const parameters = z.object({
   dseq: z.number().min(1),
+  confirm: z.literal(true).describe('Set to true to confirm closing this deployment on-chain.'),
 });
 
 export const CloseDeploymentTool: ToolDefinition<typeof parameters> = {
   name: 'close-deployment',
   description:
     'Close a deployment on Akash Network. ' +
-    'The dseq is the deployment sequence number.',
+    'The dseq is the deployment sequence number. This submits an on-chain transaction and requires confirm: true.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { dseq } = params;

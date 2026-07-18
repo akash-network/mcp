@@ -19,6 +19,7 @@ describe('CreateDeploymentTool', () => {
       rawSDL: 'version: "2.0"\nservices:\n  web:\n    image: nginx',
       deposit: 500000,
       currency: 'uakt',
+      confirm: true,
     };
 
     it('should accept valid parameters', () => {
@@ -89,7 +90,7 @@ describe('CreateDeploymentTool', () => {
 
       // Invalid SDL will throw during parsing
       const result = await CreateDeploymentTool.handler(
-        { rawSDL: 'invalid yaml: {{{{', deposit: 500000, currency: 'uakt' },
+        { rawSDL: 'invalid yaml: {{{{', deposit: 500000, currency: 'uakt', confirm: true },
         mockContext
       );
 
@@ -107,7 +108,7 @@ describe('CreateDeploymentTool', () => {
 
       // Incomplete SDL (missing services) will throw during parsing
       const result = await CreateDeploymentTool.handler(
-        { rawSDL: 'version: "2.0"', deposit: 500000, currency: 'uakt' },
+        { rawSDL: 'version: "2.0"', deposit: 500000, currency: 'uakt', confirm: true },
         mockContext
       );
 
