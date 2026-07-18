@@ -33,6 +33,10 @@ export const GetServicesTool: ToolDefinition<typeof parameters> = {
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { certificate, chainSDK } = context;
 
+    if (!certificate) {
+      return createOutput('Error getting services: An Akash certificate is required for provider operations.');
+    }
+
     // Create lease object with our custom type
     const lease: CustomLease = {
       id: {

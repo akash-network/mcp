@@ -42,6 +42,18 @@ export function loadCertificateFromDisk(address: string): CertificatePem | null 
   return null;
 }
 
+export function certificateCreationError(address: string, error: unknown): Error {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  if (errorMessage.includes('does not exist on chain')) {
+    return new Error(
+      `Cannot create an Akash certificate because account ${address} does not exist on chain. ` +
+      'Fund the account with AKT, wait for the transaction to confirm, then retry the provider operation.'
+    );
+  }
+
+  return new Error(`Could not create certificate: ${errorMessage}`);
+}
+
 export async function loadCertificate(
   wallet: AkashWallet,
   chainSDK?: ChainNodeSDK
@@ -89,7 +101,7 @@ export async function loadCertificate(
         fs.writeFileSync(certificatePath, JSON.stringify(certificate));
         return certificate;
       }
-      throw new Error(`Could not create certificate: ${errorMessage}`);
+      throw certificateCreationError(accounts[0].address, error);
     }
   }
 

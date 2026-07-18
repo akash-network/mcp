@@ -14,7 +14,7 @@ export type AkashWallet = DirectSecp256k1HdWallet | DirectSecp256k1Wallet;
 export interface ToolContext {
   client: StargateTxClient;
   wallet: AkashWallet;
-  certificate: CertificatePem;
+  certificate?: CertificatePem;
   chainSDK: ChainNodeSDK;
   reloadCertificate?: () => Promise<CertificatePem>;
 }
