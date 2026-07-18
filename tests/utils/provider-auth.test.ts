@@ -54,6 +54,38 @@ describe('provider authentication', () => {
     });
   });
 
+  it('uses provider-scoped access when an operation targets all services', async () => {
+    const wallet = await Secp256k1HdWallet.fromMnemonic(TEST_MNEMONIC, {
+      prefix: 'akash',
+    });
+    const [account] = await wallet.getAccounts();
+    const now = Math.floor(Date.now() / 1000);
+
+    const token = await createProviderToken(
+      wallet,
+      'status',
+      {
+        provider: account.address,
+        dseq: 123,
+        gseq: 1,
+        oseq: 1,
+      },
+      now
+    );
+    const payload = new JwtTokenManager(wallet).decodeToken(token);
+
+    expect(payload.leases).toEqual({
+      access: 'granular',
+      permissions: [
+        {
+          provider: account.address,
+          access: 'scoped',
+          scope: ['status'],
+        },
+      ],
+    });
+  });
+
   it('preserves the provider identity for verified HTTPS and WSS requests', () => {
     const httpsUrl = createProviderUrl('https://provider.example.com:8443', '/lease/1/1/1/status');
     const websocketUrl = createProviderUrl(

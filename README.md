@@ -106,7 +106,7 @@ The server exposes a standard MCP interface that can be used by AI models to int
 
 ### Provider authentication
 
-Provider API requests use Akash's recommended JWT authentication. The server signs a new token for each operation, limits it to the exact provider, lease, action, and service where applicable, and expires it after 15 minutes. HTTPS and WebSocket connections use the provider hostname from its on-chain URI and Node.js's normal certificate verification.
+Provider API requests use Akash's recommended JWT authentication. The server signs a new token for each operation, limits it to the exact provider and action, narrows it to the lease and service whenever the request identifies a service, and expires it after 15 minutes. HTTPS and WebSocket connections use the provider hostname from its on-chain URI and Node.js's normal certificate verification.
 
 Provider endpoints must therefore publish an `https://` URI with a certificate trusted for that hostname. Connections to plaintext, self-signed, expired, or hostname-mismatched endpoints fail closed; the server does not provide an insecure TLS fallback.
 

@@ -78,11 +78,19 @@ export async function sendManifest(
 
   const providerInfo = providerRes.provider;
   const manifest = sdl.manifestSortedJSON();
+  const services = sdl
+    .manifest()
+    .flatMap((group) =>
+      'services' in group
+        ? group.services.map((service) => service.name)
+        : group.Services.map((service) => service.Name)
+    );
   const token = await createProviderToken(wallet, 'send-manifest', {
     provider,
     dseq,
     gseq,
     oseq,
+    services,
   });
   const url = createProviderUrl(providerInfo.hostUri, `/deployment/${dseq}/manifest`);
 

@@ -1,4 +1,8 @@
-import { JwtTokenManager, type JwtTokenAccessScope } from '@akashnetwork/chain-sdk';
+import {
+  JwtTokenManager,
+  type JwtTokenAccessScope,
+  type LeasePermission,
+} from '@akashnetwork/chain-sdk';
 import type { AkashWallet } from '../types/index.js';
 
 const PROVIDER_TOKEN_TTL_SECONDS = 15 * 60;
@@ -19,6 +23,29 @@ export async function createProviderToken(
 ): Promise<string> {
   const [account] = await wallet.getAccounts();
 
+  let permission: LeasePermission;
+  if (lease.services?.length) {
+    permission = {
+      provider: lease.provider,
+      access: 'granular',
+      deployments: [
+        {
+          dseq: lease.dseq,
+          gseq: lease.gseq,
+          oseq: lease.oseq,
+          scope: [scope],
+          services: lease.services,
+        },
+      ],
+    };
+  } else {
+    permission = {
+      provider: lease.provider,
+      access: 'scoped',
+      scope: [scope],
+    };
+  }
+
   return new JwtTokenManager(wallet).generateToken({
     version: 'v1',
     iss: account.address,
@@ -27,21 +54,7 @@ export async function createProviderToken(
     exp: now + PROVIDER_TOKEN_TTL_SECONDS,
     leases: {
       access: 'granular',
-      permissions: [
-        {
-          provider: lease.provider,
-          access: 'granular',
-          deployments: [
-            {
-              dseq: lease.dseq,
-              gseq: lease.gseq,
-              oseq: lease.oseq,
-              scope: [scope],
-              ...(lease.services ? { services: lease.services } : {}),
-            },
-          ],
-        },
-      ],
+      permissions: [permission],
     },
   });
 }
