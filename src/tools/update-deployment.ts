@@ -22,6 +22,10 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
     const { rawSDL, provider } = params;
     const { wallet, chainSDK, certificate } = context;
 
+    if (!certificate) {
+      return createOutput('An Akash certificate is required to update a deployment and send its manifest.');
+    }
+
     try {
       // Parse SDL directly from the string using chain-sdk
       const sdl = SDL.fromString(rawSDL, 'beta3');

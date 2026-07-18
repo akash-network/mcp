@@ -22,6 +22,10 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { certificate, chainSDK } = context;
 
+    if (!certificate) {
+      return createOutput('Error sending manifest: An Akash certificate is required for provider operations.');
+    }
+
     // Parse SDL using chain-sdk
     const sdl = SDL.fromString(params.sdl, 'beta3');
 

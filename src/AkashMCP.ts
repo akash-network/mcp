@@ -37,30 +37,38 @@ class AkashMCP extends McpServer {
     });
   }
 
-  private async getToolContext(): Promise<ToolContext> {
+  private async getToolContext(requireCertificate = false): Promise<ToolContext> {
     if (!this.isInitialized()) {
       throw new Error('MCP server not initialized');
     }
 
-    // Always read certificate fresh from disk to ensure we have the latest
-    const accounts = await this.wallet!.getAccounts();
-    const freshCert = loadCertificateFromDisk(accounts[0].address);
-    if (freshCert) {
-      this.certificate = freshCert;
-    } else if (!this.certificate) {
-      throw new Error(
-        'No certificate available. The on-disk certificate is missing and no in-memory ' +
-        'certificate exists. Run regenerate-certificate to create a new one.'
-      );
+    if (requireCertificate) {
+      await this.ensureCertificate();
     }
 
     return {
       client: this.client!,
       wallet: this.wallet!,
-      certificate: this.certificate!,
+      certificate: this.certificate ?? undefined,
       chainSDK: this.chainSDK!,
       reloadCertificate: this.reloadCertificate.bind(this),
     };
+  }
+
+  private async ensureCertificate(): Promise<CertificatePem> {
+    if (!this.wallet || !this.chainSDK) {
+      throw new Error('MCP server not initialized');
+    }
+
+    const accounts = await this.wallet.getAccounts();
+    const freshCert = loadCertificateFromDisk(accounts[0].address);
+    if (freshCert) {
+      this.certificate = freshCert;
+      return freshCert;
+    }
+
+    this.certificate = await loadCertificate(this.wallet, this.chainSDK);
+    return this.certificate;
   }
 
   public async reloadCertificate(): Promise<CertificatePem> {
@@ -84,7 +92,6 @@ class AkashMCP extends McpServer {
       this.wallet = wallet;
       this.client = client;
       this.chainSDK = chainSDK;
-      this.certificate = await loadCertificate(wallet, chainSDK);
     } catch (error) {
       console.error('Failed to initialize MCP server:', error);
       throw error;
@@ -131,7 +138,7 @@ class AkashMCP extends McpServer {
       SendManifestTool.name,
       SendManifestTool.description,
       SendManifestTool.parameters.shape,
-      async (args) => SendManifestTool.handler(args, await this.getToolContext())
+      async (args) => SendManifestTool.handler(args, await this.getToolContext(true))
     );
 
     this.tool(
@@ -145,14 +152,14 @@ class AkashMCP extends McpServer {
       GetServicesTool.name,
       GetServicesTool.description,
       GetServicesTool.parameters.shape,
-      async (args) => GetServicesTool.handler(args, await this.getToolContext())
+      async (args) => GetServicesTool.handler(args, await this.getToolContext(true))
     );
 
     this.tool(
       UpdateDeploymentTool.name,
       UpdateDeploymentTool.description,
       UpdateDeploymentTool.parameters.shape,
-      async (args) => UpdateDeploymentTool.handler(args, await this.getToolContext())
+      async (args) => UpdateDeploymentTool.handler(args, await this.getToolContext(true))
     );
 
     this.tool(
@@ -208,19 +215,19 @@ class AkashMCP extends McpServer {
       GetLogsTool.name,
       GetLogsTool.description,
       GetLogsTool.parameters.shape,
-      async (args) => GetLogsTool.handler(args, await this.getToolContext())
+      async (args) => GetLogsTool.handler(args, await this.getToolContext(true))
     );
 
     this.tool(
       ExecCommandTool.name,
       ExecCommandTool.description,
       ExecCommandTool.parameters.shape,
-      async (args) => ExecCommandTool.handler(args, await this.getToolContext())
+      async (args) => ExecCommandTool.handler(args, await this.getToolContext(true))
     );
 
   }
   public isInitialized(): boolean {
-    return this.wallet !== null && this.client !== null && this.certificate !== null && this.chainSDK !== null;
+    return this.wallet !== null && this.client !== null && this.chainSDK !== null;
   }
 }
 

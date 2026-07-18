@@ -37,6 +37,10 @@ export const GetLogsTool: ToolDefinition<typeof parameters> = {
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { certificate, chainSDK } = context;
 
+    if (!certificate) {
+      return createOutput('Error getting logs: An Akash certificate is required for provider operations.');
+    }
+
     try {
       // Query provider using chain SDK (v1beta4 API)
       const providerRes = await chainSDK.akash.provider.v1beta4.getProvider({
