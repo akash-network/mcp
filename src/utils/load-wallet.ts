@@ -1,4 +1,4 @@
-import { DirectSecp256k1HdWallet, DirectSecp256k1Wallet } from '@cosmjs/proto-signing';
+import { Secp256k1HdWallet, Secp256k1Wallet } from '@cosmjs/amino';
 import { createStargateClient, createChainNodeSDK } from '@akashnetwork/chain-sdk';
 import { SERVER_CONFIG, validateMnemonic, validatePrivateKey } from '../config.js';
 import type { AkashWallet, ChainNodeSDK, StargateTxClient } from '../types/index.js';
@@ -14,13 +14,13 @@ export async function loadWalletAndClient(): Promise<WalletAndClient> {
   let wallet: AkashWallet;
   if (SERVER_CONFIG.mnemonic) {
     const mnemonic = validateMnemonic(SERVER_CONFIG.mnemonic);
-    wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    wallet = await Secp256k1HdWallet.fromMnemonic(mnemonic, {
       prefix: 'akash',
     });
   } else if (SERVER_CONFIG.privateKey) {
     const privateKey = validatePrivateKey(SERVER_CONFIG.privateKey);
     const privateKeyBytes = Uint8Array.from(Buffer.from(privateKey, 'hex'));
-    wallet = await DirectSecp256k1Wallet.fromKey(privateKeyBytes, 'akash');
+    wallet = await Secp256k1Wallet.fromKey(privateKeyBytes, 'akash');
   } else {
     throw new Error(
       'Either AKASH_MNEMONIC or AKASH_PRIVATE_KEY environment variable must be provided.'

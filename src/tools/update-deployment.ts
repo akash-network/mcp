@@ -20,7 +20,7 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
     const { rawSDL, provider } = params;
-    const { wallet, chainSDK, certificate } = context;
+    const { wallet, chainSDK } = context;
 
     try {
       // Parse SDL directly from the string using chain-sdk
@@ -59,7 +59,7 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
       };
 
       // Send manifest to provider
-      await sendManifest(sdl, leaseId, certificate, chainSDK);
+      await sendManifest(sdl, leaseId, wallet, chainSDK);
 
       return createOutput({
         success: true,
@@ -68,7 +68,10 @@ export const UpdateDeploymentTool: ToolDefinition<typeof parameters> = {
     } catch (error: unknown) {
       console.error('Error updating deployment:', error);
       return createOutput({
-        error: error instanceof Error ? error.message : String(error) || 'Unknown error updating deployment',
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error) || 'Unknown error updating deployment',
       });
     }
   },

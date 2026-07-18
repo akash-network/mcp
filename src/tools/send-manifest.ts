@@ -1,9 +1,20 @@
 import { z } from 'zod/v3';
-import type { ToolDefinition, ToolContext, CustomLease, CustomLeaseID } from '../types/index.js';
-import { SDL, type CertificatePem } from '@akashnetwork/chain-sdk';
+import type {
+  ToolDefinition,
+  ToolContext,
+  CustomLease,
+  CustomLeaseID,
+  AkashWallet,
+} from '../types/index.js';
+import { SDL } from '@akashnetwork/chain-sdk';
 import { createOutput } from '../utils/create-output.js';
 import type { ChainNodeSDK } from '../types/index.js';
 import https from 'https';
+import {
+  createProviderHeaders,
+  createProviderToken,
+  createProviderUrl,
+} from '../utils/provider-auth.js';
 
 const parameters = z.object({
   sdl: z.string().min(1),
@@ -20,7 +31,7 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
     'Send a manifest to a provider using the provided SDL, owner, dseq, gseq, oseq and provider.',
   parameters,
   handler: async (params: z.infer<typeof parameters>, context: ToolContext) => {
-    const { certificate, chainSDK } = context;
+    const { wallet, chainSDK } = context;
 
     // Parse SDL using chain-sdk
     const sdl = SDL.fromString(params.sdl, 'beta3');
@@ -35,7 +46,7 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
     };
 
     try {
-      await sendManifest(sdl, { id: lease }, certificate, chainSDK);
+      await sendManifest(sdl, { id: lease }, wallet, chainSDK);
       return createOutput('Manifest sent successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -44,12 +55,13 @@ export const SendManifestTool: ToolDefinition<typeof parameters> = {
   },
 };
 
-export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: CertificatePem, chainSDK?: ChainNodeSDK) {
-  if (!lease.id) {
-    throw new Error('Lease ID is undefined');
-  }
-
-  const { dseq, gseq, oseq, provider, owner } = lease.id;
+export async function sendManifest(
+  sdl: SDL,
+  lease: CustomLease,
+  wallet: AkashWallet,
+  chainSDK?: ChainNodeSDK
+) {
+  const { dseq, gseq, oseq, provider } = lease.id;
 
   if (!chainSDK) {
     throw new Error('ChainSDK is required to send manifest');
@@ -66,34 +78,24 @@ export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: Ce
 
   const providerInfo = providerRes.provider;
   const manifest = sdl.manifestSortedJSON();
-  const path = `/deployment/${dseq}/manifest`;
-
-  const uri = new URL(providerInfo.hostUri);
-
-  // Create HTTPS agent with mTLS credentials
-  // IMPORTANT: Use a custom servername that doesn't match the provider's hostname
-  // This triggers mTLS mode on the provider (vs Let's Encrypt mode when SNI matches)
-  const agent = new https.Agent({
-    cert: certificate.cert,
-    key: certificate.privateKey,
-    rejectUnauthorized: false,
-    // Use 'localhost' as SNI to trigger mTLS mode on the provider
-    servername: 'localhost',
+  const token = await createProviderToken(wallet, 'send-manifest', {
+    provider,
+    dseq,
+    gseq,
+    oseq,
   });
+  const url = createProviderUrl(providerInfo.hostUri, `/deployment/${dseq}/manifest`);
 
   return await new Promise<void>((resolve, reject) => {
     const req = https.request(
+      url,
       {
-        hostname: uri.hostname,
-        port: uri.port,
-        path: path,
         method: 'PUT',
-        headers: {
+        headers: createProviderHeaders(token, {
           'Content-Type': 'application/json',
           Accept: 'application/json',
           'Content-Length': Buffer.byteLength(manifest),
-        },
-        agent: agent,
+        }),
       },
       (res) => {
         res.on('error', reject);
@@ -105,7 +107,9 @@ export async function sendManifest(sdl: SDL, lease: CustomLease, certificate: Ce
 
         res.on('end', () => {
           if (res.statusCode !== 200) {
-            return reject(new Error(`Could not send manifest: ${res.statusCode} - ${responseBody}`));
+            return reject(
+              new Error(`Could not send manifest: ${res.statusCode} - ${responseBody}`)
+            );
           }
           resolve();
         });

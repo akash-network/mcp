@@ -27,6 +27,7 @@ This server provides a bridge between AI agents and the Akash Network, allowing 
 
 - **Wallet and Client Management**: Handles Akash wallet authentication and client initialization
 - **Certificate Management**: Manages Akash certificates
+- **Secure Provider Authentication**: Uses short-lived, lease-scoped JWTs over hostname-verified TLS
 - **Tools for Akash Interaction**:
   - Account address retrieval
   - Deployment creation, querying, updating, and termination
@@ -102,6 +103,12 @@ npm run dev:watch
 ### Using the Server with AI Models
 
 The server exposes a standard MCP interface that can be used by AI models to interact with the Akash Network. It uses the stdio transport by default, making it compatible with most MCP clients.
+
+### Provider authentication
+
+Provider API requests use Akash's recommended JWT authentication. The server signs a new token for each operation, limits it to the exact provider, lease, action, and service where applicable, and expires it after 15 minutes. HTTPS and WebSocket connections use the provider hostname from its on-chain URI and Node.js's normal certificate verification.
+
+Provider endpoints must therefore publish an `https://` URI with a certificate trusted for that hostname. Connections to plaintext, self-signed, expired, or hostname-mismatched endpoints fail closed; the server does not provide an insecure TLS fallback.
 
 ## Available Tools
 
