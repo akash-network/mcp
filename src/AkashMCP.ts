@@ -5,6 +5,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   GetAccountAddrTool,
   GetBidsTool,
+  GetProviderTool,
+  GetProvidersTool,
   GetSDLsTool,
   GetSDLTool,
   SendManifestTool,
@@ -104,6 +106,20 @@ class AkashMCP extends McpServer {
       GetBidsTool.description,
       GetBidsTool.parameters.shape,
       async (args) => GetBidsTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      GetProviderTool.name,
+      GetProviderTool.description,
+      GetProviderTool.parameters.shape,
+      async (args) => GetProviderTool.handler(args, await this.getToolContext())
+    );
+
+    this.tool(
+      GetProvidersTool.name,
+      GetProvidersTool.description,
+      GetProvidersTool.parameters.shape,
+      async (args) => GetProvidersTool.handler(args, await this.getToolContext())
     );
 
     this.tool(

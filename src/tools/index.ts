@@ -4,6 +4,8 @@ export { SendManifestTool } from './send-manifest.js';
 export { GetSDLTool } from './get-sdl.js';
 export { GetSDLsTool } from './get-sdls.js';
 export { GetBidsTool } from './get-bids.js';
+export { GetProviderTool } from './get-provider.js';
+export { GetProvidersTool } from './get-providers.js';
 export { CreateLeaseTool } from './create-lease.js';
 export { GetAccountAddrTool } from './get-account-addr.js';
 export { UpdateDeploymentTool } from './update-deployment.js';
