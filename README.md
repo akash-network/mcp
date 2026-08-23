@@ -32,6 +32,7 @@ This server provides a bridge between AI agents and the Akash Network, allowing 
   - Deployment creation, querying, updating, and termination
   - SDL (Stack Definition Language) operations
   - Bid management
+  - Provider discovery and inspection
   - Lease creation
   - Manifest deployment
 
@@ -110,6 +111,8 @@ The server provides the following tools for AI agents:
 - **GetAccountAddrTool**: Retrieve your Akash account address
 - **GetBalancesTool**: Get the AKT (uakt) and other balances for a given Akash account address
 - **GetBidsTool**: Get bids for deployments
+- **GetProviderTool**: Get details for a single provider by owner address
+- **GetProvidersTool**: List providers on the network, with pagination
 - **CreateDeploymentTool**: Create a new deployment on Akash Network
 - **GetDeploymentTool**: Get deployment details including status, groups, and escrow account
 - **CloseDeploymentTool**: Close/terminate a deployment on Akash Network
